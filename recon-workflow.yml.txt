@@ -1,0 +1,67 @@
+# Runs RECON for free on GitHub (public repository): every hour 05:10-20:10 UTC it fetches news, writes reports,
+# sends the daily brief (once, from 07:00 UK time) and republishes the website to GitHub Pages.
+name: RECON
+on:
+  schedule:
+    - cron: '10 5-20 * * *'
+  workflow_dispatch:
+concurrency:
+  group: recon
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --omit=dev
+      - name: Restore saved data (database + rates)
+        run: |
+          mkdir -p data
+          if git ls-remote --exit-code --heads origin data >/dev/null 2>&1; then
+            git fetch --depth=1 origin data
+            git archive FETCH_HEAD | tar -x -C data
+          fi
+      - name: Run RECON
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+          LEAN: ${{ vars.LEAN || '1' }}
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          SUBSCRIBE_FORM_ACTION: ${{ vars.SUBSCRIBE_FORM_ACTION }}
+          SUBSCRIBE_MODE: ${{ vars.SUBSCRIBE_MODE || 'form' }}
+          NEWSLETTER_PROVIDER: ${{ vars.NEWSLETTER_PROVIDER || 'buttondown' }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_SEGMENT_ID: ${{ vars.RESEND_SEGMENT_ID }}
+          RESEND_AUDIENCE_ID: ${{ vars.RESEND_AUDIENCE_ID }}
+          RESEND_AUTOSEND: ${{ vars.RESEND_AUTOSEND }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          BUTTONDOWN_AUTOSEND: ${{ vars.BUTTONDOWN_AUTOSEND }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_MIN_INTERVAL_MS: ${{ vars.LLM_MIN_INTERVAL_MS }}
+          MAX_LLM_CALLS_PER_DAY: ${{ vars.MAX_LLM_CALLS_PER_DAY }}
+        run: node recon-run.js
+      - name: Save data for the next run
+        run: |
+          rm -rf /tmp/state && mkdir /tmp/state
+          cp data/margin.db data/rates.json /tmp/state/
+          cd /tmp/state && git init -q && git checkout -q -b data && git add -A
+          git -c user.name=recon-bot -c user.email=recon-bot@users.noreply.github.com commit -qm "state $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+      - id: deployment
+        uses: actions/deploy-pages@v4

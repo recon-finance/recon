@@ -1,0 +1,63 @@
+{
+  "asOf": "2026-11-01",
+  "note": "Auto-updated twice daily from rateprobability.com (rate, next meeting, market pricing); lastMove/lastMoveDetail/sub lines are manual unless a rate change is detected. Edit by hand any time.",
+  "banks": [
+    {
+      "id": "boe",
+      "code": "BOE",
+      "name": "Bank of England",
+      "rateLabel": "Bank Rate",
+      "rate": "3.75",
+      "unit": "%",
+      "sub": "",
+      "lastMove": "HOLD",
+      "lastMoveDetail": "Held 17 Sep, 6–3 vote · unchanged since 18 Dec 2025",
+      "next": "2026-11-05T12:00:00Z",
+      "nextLabel": "05 NOV",
+      "market": "~94% priced for +25bp to 4.00%",
+      "source": {
+        "name": "Bank of England",
+        "url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate"
+      },
+      "rateNum": 3.75
+    },
+    {
+      "id": "ecb",
+      "code": "ECB",
+      "name": "European Central Bank",
+      "rateLabel": "Deposit facility",
+      "rate": "2.50",
+      "unit": "%",
+      "sub": "MRO 2.65% · MLF 2.90%",
+      "lastMove": "HOLD",
+      "lastMoveDetail": "Held 29 Oct, unanimous · last move +25bp, Sep",
+      "next": "2026-12-17T13:15:00Z",
+      "nextLabel": "17 DEC",
+      "market": "~82% priced for +25bp to 2.75%",
+      "source": {
+        "name": "ECB",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html"
+      },
+      "rateNum": 2.5
+    },
+    {
+      "id": "fed",
+      "code": "FED",
+      "name": "US Federal Reserve",
+      "rateLabel": "Target range",
+      "rate": "3.75–4.00",
+      "unit": "%",
+      "sub": "IORB 3.90%",
+      "lastMove": "HOLD",
+      "lastMoveDetail": "Held 28 Oct, 10–2 (two voted to hike) · last move +25bp, Sep",
+      "next": "2026-12-09T19:00:00Z",
+      "nextLabel": "09 DEC",
+      "market": "Further +25bp priced for Dec",
+      "source": {
+        "name": "Federal Reserve",
+        "url": "https://www.federalreserve.gov/monetarypolicy/files/monetary20261028a1.pdf"
+      },
+      "rateNum": 4
+    }
+  ]
+}

@@ -1,0 +1,477 @@
+{
+  "note": "SOURCE POLICY. tier \"full\" = we may fetch full text and rewrite it (public/primary sources). tier \"snippet\" = headline + RSS description only (corroboration + link-out), never full text. enabled:false switches a source off. required:true = health checks warn loudly if it goes quiet. Feed URLs marked unverified in the README are autodiscovered from \"site\" if they fail.",
+  "minFullSources": 1,
+  "publishers": [
+    {
+      "name": "HM Treasury",
+      "url": "https://www.gov.uk/government/organisations/hm-treasury.atom",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://www.gov.uk",
+      "licence": {
+        "type": "Open Government Licence v3.0",
+        "status": "verified",
+        "basis": "Crown content is offered for free commercial reuse under the OGL with attribution (verified for gov.uk and ONS; OBR/HMRC/CMA/HMT publish on gov.uk or under the same licence).",
+        "termsUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "checkedOn": "2026-11-01"
+      }
+    },
+    {
+      "name": "HMRC",
+      "url": "https://www.gov.uk/government/organisations/hm-revenue-customs.atom",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "filter": true,
+      "site": "https://www.gov.uk",
+      "licence": {
+        "type": "Open Government Licence v3.0",
+        "status": "verified",
+        "basis": "Crown content is offered for free commercial reuse under the OGL with attribution (verified for gov.uk and ONS; OBR/HMRC/CMA/HMT publish on gov.uk or under the same licence).",
+        "termsUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "checkedOn": "2026-11-01"
+      }
+    },
+    {
+      "name": "CMA",
+      "url": "https://www.gov.uk/government/organisations/competition-and-markets-authority.atom",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "filter": true,
+      "site": "https://www.gov.uk",
+      "licence": {
+        "type": "Open Government Licence v3.0",
+        "status": "verified",
+        "basis": "Crown content is offered for free commercial reuse under the OGL with attribution (verified for gov.uk and ONS; OBR/HMRC/CMA/HMT publish on gov.uk or under the same licence).",
+        "termsUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "checkedOn": "2026-11-01"
+      }
+    },
+    {
+      "name": "OBR",
+      "url": "https://obr.uk/feed/",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://obr.uk",
+      "licence": {
+        "type": "Open Government Licence v3.0",
+        "status": "assumed",
+        "basis": "OBR publishes under the Open Government Licence per its site; confirm on obr.uk once.",
+        "termsUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "checkedOn": "2026-11-01"
+      }
+    },
+    {
+      "name": "ONS",
+      "url": "https://www.ons.gov.uk/releasecalendar?rss",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://www.ons.gov.uk",
+      "licence": {
+        "type": "Open Government Licence v3.0",
+        "status": "verified",
+        "basis": "Crown content is offered for free commercial reuse under the OGL with attribution (verified for gov.uk and ONS; OBR/HMRC/CMA/HMT publish on gov.uk or under the same licence).",
+        "termsUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "checkedOn": "2026-11-01"
+      }
+    },
+    {
+      "name": "Bank of England",
+      "url": "https://www.bankofengland.co.uk/rss/news",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://www.bankofengland.co.uk",
+      "licence": {
+        "type": "Public body, standard reuse with attribution",
+        "status": "assumed",
+        "basis": "Public-interest institution publishing statements for dissemination. NOT verified in this build: read the terms page once and set status to \"verified\".",
+        "termsUrl": "https://www.bankofengland.co.uk/legal",
+        "checkedOn": null
+      }
+    },
+    {
+      "name": "Bank of England",
+      "url": "https://www.bankofengland.co.uk/rss/publications",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://www.bankofengland.co.uk",
+      "licence": {
+        "type": "Public body, standard reuse with attribution",
+        "status": "assumed",
+        "basis": "Public-interest institution publishing statements for dissemination. NOT verified in this build: read the terms page once and set status to \"verified\".",
+        "termsUrl": "https://www.bankofengland.co.uk/legal",
+        "checkedOn": null
+      }
+    },
+    {
+      "name": "FCA",
+      "url": "https://www.fca.org.uk/news/rss.xml",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "uk": true,
+      "site": "https://www.fca.org.uk",
+      "licence": {
+        "type": "Public body, standard reuse with attribution",
+        "status": "assumed",
+        "basis": "Public-interest institution publishing statements for dissemination. NOT verified in this build: read the terms page once and set status to \"verified\".",
+        "termsUrl": "https://www.fca.org.uk/terms-and-conditions",
+        "checkedOn": null
+      }
+    },
+    {
+      "name": "Federal Reserve",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "global": true,
+      "site": "https://www.federalreserve.gov",
+      "licence": {
+        "type": "US federal government work",
+        "status": "assumed",
+        "basis": "Public-interest institution publishing statements for dissemination. NOT verified in this build: read the terms page once and set status to \"verified\".",
+        "termsUrl": "https://www.federalreserve.gov/disclaimer.htm",
+        "checkedOn": null
+      }
+    },
+    {
+      "name": "ECB",
+      "url": "https://www.ecb.europa.eu/rss/press.xml",
+      "tier": "full",
+      "enabled": true,
+      "required": true,
+      "global": true,
+      "site": "https://www.ecb.europa.eu",
+      "licence": {
+        "type": "Public body, standard reuse with attribution",
+        "status": "assumed",
+        "basis": "Public-interest institution publishing statements for dissemination. NOT verified in this build: read the terms page once and set status to \"verified\".",
+        "termsUrl": "https://www.ecb.europa.eu/services/disclaimer/html/index.en.html",
+        "checkedOn": null
+      }
+    },
+    {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/world/uk?format=rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "filter": true,
+      "core": true
+    },
+    {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/global-economy?format=rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true
+    },
+    {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/markets?format=rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true
+    },
+    {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/companies?format=rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true
+    },
+    {
+      "name": "Bloomberg",
+      "url": "https://feeds.bloomberg.com/markets/news.rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true
+    },
+    {
+      "name": "Bloomberg",
+      "url": "https://feeds.bloomberg.com/economics/news.rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true
+    },
+    {
+      "name": "Bloomberg",
+      "url": "https://feeds.bloomberg.com/politics/news.rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "filter": true,
+      "core": true
+    },
+    {
+      "name": "Reuters",
+      "url": "https://news.google.com/rss/search?q=site:reuters.com/business+when:1d&hl=en-GB&gl=GB&ceid=GB:en",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true,
+      "viaGoogleNews": true,
+      "suffix": "Reuters"
+    },
+    {
+      "name": "Reuters",
+      "url": "https://news.google.com/rss/search?q=site:reuters.com/markets+when:1d&hl=en-GB&gl=GB&ceid=GB:en",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true,
+      "core": true,
+      "viaGoogleNews": true,
+      "suffix": "Reuters"
+    },
+    {
+      "name": "BBC News",
+      "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "core": true
+    },
+    {
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com/business/rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "core": true
+    },
+    {
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com/business/economics/rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "core": true
+    },
+    {
+      "name": "City AM",
+      "url": "https://www.cityam.com/feed/",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "core": true,
+      "site": "https://www.cityam.com"
+    },
+    {
+      "name": "IFS",
+      "url": "https://ifs.org.uk/rss.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "IFS owns the copyright in all material and asks external users to contact outputs@ifs.org.uk. Headline/summary + link only. Email them for permission to go further.",
+        "checkedOn": "2026-11-01",
+        "termsUrl": "https://ifs.org.uk/copyright"
+      },
+      "uk": true,
+      "core": true,
+      "site": "https://ifs.org.uk"
+    },
+    {
+      "name": "Sky News",
+      "url": "https://feeds.skynews.com/feeds/rss/business.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true
+    },
+    {
+      "name": "The Telegraph",
+      "url": "https://www.telegraph.co.uk/business/rss.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true
+    },
+    {
+      "name": "The Independent",
+      "url": "https://www.independent.co.uk/news/business/rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true
+    },
+    {
+      "name": "This is Money",
+      "url": "https://www.thisismoney.co.uk/money/index.rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true
+    },
+    {
+      "name": "The Economist",
+      "url": "https://www.economist.com/finance-and-economics/rss.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true
+    },
+    {
+      "name": "CNBC",
+      "url": "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true
+    },
+    {
+      "name": "MarketWatch",
+      "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true
+    },
+    {
+      "name": "WSJ",
+      "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "global": true
+    }
+  ]
+}

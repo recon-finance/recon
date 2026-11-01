@@ -1,0 +1,2 @@
+Upload every file in this folder (except this one) to your GitHub repository with the "choose your files" button.
+Then create the schedule file: Add file > Create new file, name it .github/workflows/recon.yml, and paste in the text from recon-workflow.yml.txt.

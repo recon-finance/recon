@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RECON · UK Economics, Banking & Markets Brief</title>
+<meta name="description" content="RECON: the UK morning brief on economics, banking and markets. AI-compiled from 3+ independent sources, every source linked.">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#000;--ink:#f2f2f2;--sub:#b3b3b3;--mute:#7a7a7a;--line:#242424;--line2:#3a3a3a;--panel:#0a0a0a;
+ --sans:'Inter','Helvetica Neue',Helvetica,Arial,system-ui,-apple-system,'Segoe UI',sans-serif;
+ --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;letter-spacing:-.003em;
+ background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px}
+a{color:inherit}
+.label{font:500 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--mute);white-space:nowrap}
+
+/* classification strip */
+.cls{background:var(--ink);color:#000;text-align:center;font:600 10px/1 var(--sans);letter-spacing:.28em;padding:6px 10px;text-transform:uppercase}
+
+/* top bar */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(0,0,0,.93);backdrop-filter:blur(8px);z-index:10}
+.brand{font:700 15px var(--sans);letter-spacing:.32em}
+.bar .r{display:flex;gap:20px;align-items:center}
+.link::before{content:"";display:inline-block;width:6px;height:6px;background:var(--ink);margin-right:8px;animation:blink 2.4s infinite}
+@keyframes blink{50%{opacity:.15}}
+.snd{all:unset;cursor:pointer;font:500 10px var(--mono);letter-spacing:.14em;color:var(--sub);border:1px solid var(--line2);padding:5px 9px}
+.snd:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+@media(max-width:560px){.bar .hide-s{display:none}.cls{letter-spacing:.14em;font-size:9px}}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1180px;margin:0 auto}
+.rail{padding:36px 28px;border-right:1px solid var(--line);position:sticky;top:78px;align-self:start}
+main{padding:36px 40px 80px;min-width:0}
+@media(max-width:860px){
+ .wrap{grid-template-columns:1fr}
+ .rail{position:static;border-right:0;border-bottom:1px solid var(--line);padding:24px 20px}
+ main{padding:24px 20px 60px}
+ .bar{padding:12px 20px}
+}
+
+/* rail */
+.ao{display:flex;flex-direction:column;margin:14px 0 36px}
+.ao button{all:unset;cursor:pointer;position:relative;display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--sub);transition:color .15s}
+.ao button:hover{color:var(--ink)}
+.ao button.on{color:var(--ink);font-weight:600}
+.ao button.on::before{content:"";position:absolute;left:-16px;top:50%;margin-top:-3px;width:6px;height:6px;background:var(--ink)}
+.ao button span{font-family:var(--mono);font-size:11px;color:var(--mute)}
+@media(max-width:860px){.ao{flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:24px}.ao button{border:1px solid var(--line2);padding:7px 12px}.ao button.on::before{display:none}.ao button.on{background:var(--ink);color:#000}.ao button span{display:none}}
+.sub p{margin:10px 0 14px;font-size:13px;color:var(--sub);line-height:1.5}
+.sub input{width:100%;background:transparent;border:1px solid var(--line2);color:var(--ink);font:14px var(--sans);padding:12px;border-radius:0;margin-bottom:8px}
+.sub input::placeholder{color:var(--mute)}
+.sub input:focus{outline:none;border-color:var(--ink)}
+.go{width:100%;background:var(--ink);color:#000;border:1px solid var(--ink);font:600 12px var(--sans);letter-spacing:.14em;padding:13px;cursor:pointer;transition:background .15s,color .15s}
+.go:hover{background:#000;color:var(--ink)}
+.go:disabled{opacity:.5}
+.msg{font-size:12px;margin-top:10px;min-height:16px;color:var(--sub)}
+.msg.er{color:#fff;text-decoration:underline}
+.fine{font-size:11px;color:var(--mute);margin-top:14px;line-height:1.5}
+
+/* section headings */
+.sec{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
+.lede{color:var(--sub);margin:0 0 28px;max-width:56ch}
+
+/* corner-bracket panels */
+.br{--c:var(--sub);background:
+ linear-gradient(var(--c),var(--c)) top left/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) top left/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) top right/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) top right/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) bottom left/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) bottom left/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) bottom right/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) bottom right/1px 10px no-repeat,var(--panel);
+ border:1px solid var(--line)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:36px}
+@media(max-width:980px){.kpis{grid-template-columns:1fr}}
+.kpi{padding:16px 18px;transition:border-color .2s}
+.kpi:hover{--c:var(--ink);border-color:var(--line2)}
+.kh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.kv{font:600 38px/1.1 var(--sans);letter-spacing:-.03em;margin:14px 0 2px;white-space:nowrap}
+.kv small{font:500 18px var(--sans);color:var(--sub);margin-left:2px}
+.ksub{font:11px var(--mono);color:var(--mute);min-height:16px}
+.kr{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:7px}
+.kr div{display:grid;grid-template-columns:74px 1fr;gap:8px;font-size:12.5px;color:var(--sub);line-height:1.4}
+.kr .label{padding-top:2px;font-size:10px}
+.tag{display:inline-block;border:1px solid var(--sub);color:var(--ink);padding:1px 6px;font:600 10px var(--mono);letter-spacing:.12em;margin-right:6px}
+.t-minus{font-family:var(--mono);color:var(--ink)}
+.kfoot{display:flex;justify-content:space-between;margin-top:12px;font:10px var(--mono);color:var(--mute)}
+.kfoot a{text-decoration:none;border-bottom:1px solid var(--line2)}
+.kfoot a:hover{color:var(--ink);border-color:var(--ink)}
+.knote{font:10.5px var(--mono);color:var(--mute);margin:-24px 0 36px}
+
+/* stats */
+.stats{display:flex;gap:40px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
+.stat b{display:block;font:600 26px/1.1 var(--sans);letter-spacing:-.02em}
+.stat .label{display:block;margin-top:6px}
+
+/* stories */
+.story{padding:28px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:76px minmax(0,1fr);gap:0 8px}
+.idx{font:500 11px var(--mono);color:var(--mute);padding-top:3px;line-height:1.5}
+.meta1{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.prec{font:600 9.5px var(--mono);letter-spacing:.16em;border:1px solid var(--line2);color:var(--sub);padding:2px 6px}
+.prec.p1{color:var(--ink);border-color:var(--ink)}
+.prec.p2{color:#000;background:var(--ink);border-color:var(--ink)}
+.story h2{font:600 21px/1.3 var(--sans);letter-spacing:-.015em;margin:0 0 10px;max-width:34em}
+.bluf{margin:0;color:var(--sub);max-width:60ch}
+.bluf b{font:600 11px var(--sans);letter-spacing:.14em;color:var(--ink);margin-right:8px}
+.meta2{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.meta2 > span{display:flex;align-items:center;gap:8px}
+.sq{display:inline-flex;gap:3px}
+.sq i{width:9px;height:9px;border:1px solid var(--sub)}
+.sq i.f{background:var(--ink);border-color:var(--ink)}
+.tog{all:unset;cursor:pointer;font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border-bottom:1px solid var(--line2);padding-bottom:2px;margin-left:auto}
+.tog:hover{border-color:var(--ink)}
+.det{display:none;margin-top:22px;padding:22px}
+.story.open .det{display:block}
+.det h4{margin:0 0 8px;font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.det section+section{margin-top:20px}
+.det ul{margin:0;padding:0;list-style:none}
+.det li{padding:5px 0 5px 18px;position:relative;color:var(--sub)}
+.det li::before{content:"—";position:absolute;left:0;color:var(--mute)}
+.det .why{color:var(--sub)}
+.dissent{border-left:2px solid var(--ink);padding:2px 0 2px 12px;margin-top:6px;color:var(--ink)}
+.take{margin:14px 0 0;padding-left:12px;border-left:2px solid var(--ink);max-width:60ch;color:var(--ink);font-size:14.5px}
+.take b{display:inline-block;background:var(--ink);color:#000;font:700 9.5px/1 var(--mono);letter-spacing:.14em;padding:3px 6px;margin-right:8px;vertical-align:1px}
+.det{padding:26px 28px}
+.det .prose p{margin:0 0 14px;max-width:66ch;line-height:1.75;color:#cfcfcf;font-size:15px}
+.cite{font:600 9.5px var(--mono);color:var(--ink);border:1px solid var(--line2);padding:0 3px;margin-left:2px;vertical-align:super;line-height:1;cursor:help}
+.note{font:11px/1.5 var(--mono);color:var(--mute);border:1px dashed var(--line2);padding:8px 10px;margin:0 0 20px}
+table.nums{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 4px}
+table.nums th{font:500 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);text-align:left;padding:6px 8px 6px 0;border-bottom:1px solid var(--line2)}
+table.nums td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.nums td.v{font:600 14px var(--mono);color:var(--ink);white-space:nowrap}
+table.nums td small{display:block;color:var(--mute);font-size:11.5px;margin-top:1px}
+table.nums td.s{font:11px var(--mono);color:var(--mute);width:34px}
+.watch{list-style:none;margin:0;padding:0}
+.watch li{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);color:#cfcfcf}
+.watch li::before{content:none}
+.watch .when{font:600 11px var(--mono);letter-spacing:.06em;color:var(--ink)}
+.rx{margin:30px 0 4px;padding:0 0 18px}
+.rxh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--ink);color:#000;font:700 10px var(--mono);letter-spacing:.18em;padding:8px 14px;margin:-1px -1px 16px}
+.rxh span:last-child{font-weight:500;opacity:.7}
+.rx>*:not(.rxh){margin-left:20px;margin-right:20px}
+.thesis{font:600 19px/1.4 var(--sans);letter-spacing:-.012em;color:#fff;margin-bottom:14px;max-width:34em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.chp{all:unset;cursor:pointer;border:1px solid var(--line2);padding:4px 9px;font:11px var(--mono);color:var(--sub);letter-spacing:.04em}
+button.chp:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+span.chp{cursor:default}
+.rxrow{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:14px;font-size:14px;color:#cfcfcf;line-height:1.6}
+.rxrow .label{padding-top:4px}
+.cs{display:inline-block;font:600 10px var(--mono);letter-spacing:.1em;padding:2px 7px;border:1px solid var(--sub);color:var(--ink)}
+.cs.ok{background:var(--ink);color:#000;border-color:var(--ink)}
+.cs.no{border-style:dashed;color:var(--sub)}
+.trs{display:flex;gap:40px;flex-wrap:wrap;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px}
+.trs .stat small{display:block;font:10.5px var(--mono);color:var(--mute);margin-top:3px}
+table.tr td.v{white-space:normal}
+.trn{font:11px/1.6 var(--mono);color:var(--mute);max-width:72ch;margin:10px 0 0}
+.stale{font:600 9px var(--mono);letter-spacing:.12em;border:1px dashed var(--sub);color:var(--sub);padding:1px 5px;margin-left:6px}
+.disc{font:10.5px/1.5 var(--mono);color:var(--mute);margin-top:16px}
+.det section.top ul{margin-bottom:0}
+@media(max-width:560px){.det{padding:20px 16px}.rx>*:not(.rxh){margin-left:14px;margin-right:14px}.rxrow,.watch li{grid-template-columns:1fr;gap:2px}}
+.srcs{display:flex;flex-wrap:wrap;gap:8px}
+.srcs a{text-decoration:none;border:1px solid var(--line2);padding:6px 12px;font-size:13px;color:var(--sub);transition:.15s}
+.srcs a:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+@media(max-width:560px){.story{grid-template-columns:1fr}.idx{margin-bottom:6px}.tog{margin-left:0}.stats{gap:28px}}
+.empty{padding:60px 0;color:var(--mute);border-bottom:1px solid var(--line)}
+.eor{text-align:center;font:10px var(--mono);letter-spacing:.3em;color:var(--mute);padding:28px 0 0}
+footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;line-height:1.6}
+.cls.bot{margin-top:0}
+
+/* scramble transition */
+#fw{position:relative}
+.scan{position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9) 25%,rgba(255,255,255,.9) 75%,transparent);box-shadow:0 0 9px 1px rgba(255,255,255,.16);opacity:0;pointer-events:none;z-index:5}
+.scan.go{animation:sweep var(--sd,1s) cubic-bezier(.4,0,.2,1) forwards}
+@keyframes sweep{0%{top:0;opacity:0}8%{opacity:.9}92%{opacity:.9}100%{top:100%;opacity:0}}
+.scr{font-variant-ligatures:none}
+/* boot overlay */
+#boot{position:fixed;inset:0;background:#000;z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+#boot pre{font:12px/1.9 var(--mono);color:var(--sub);margin:0;letter-spacing:.08em}
+#boot.off{opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#boot{display:none}.link::before{animation:none}}
+</style>
+</head>
+<body>
+<div id="boot"><pre id="bootTxt"></pre></div>
+<div class="cls">Unclassified // Open-source intelligence // For information only</div>
+<div class="bar">
+ <span class="brand">RECON</span>
+ <span class="r"><span class="mono hide-s" id="net"></span><span class="mono link hide-s">LINK SECURE</span><span class="mono" id="dtg"></span><button class="snd" id="snd" aria-pressed="true">AUDIO ON</button></span>
+</div>
+<div class="wrap">
+ <aside class="rail">
+  <div class="label">Area of operations</div>
+  <div class="ao" id="ao"></div>
+  <div class="sub">
+   <div class="label">Morning brief · 0700 UK</div>
+   <p>Your commute read, in your inbox before you board.</p>
+   <form id="f">
+    <input type="email" id="em" placeholder="Email address" required autocomplete="email" aria-label="Email address">
+    <button class="go" id="go">SUBSCRIBE</button>
+    <div class="msg" id="msg" role="status"></div>
+   </form>
+   <div class="fine">Double opt-in. Unsubscribe in one click. Your selected area of operations sets your sectors.</div>
+  </div>
+ </aside>
+ <main>
+  <div class="label">UK situation report</div>
+  <h1>UK economics, banking and markets. Confirmed by three or more sources.</h1>
+  <p class="lede">Your morning brief for the commute. Corroborated reports from independent outlets, plus the day's official releases from ONS, OBR, the Treasury, the Bank of England and more. Every source linked.</p>
+
+  <div class="sec"><span class="label">§1 · Policy rates</span></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="knote" id="knote"></div>
+
+  <div class="sec"><span class="label">§2 · Intelligence reports</span></div>
+  <div class="stats">
+   <div class="stat"><b id="s1">–</b><span class="label">Reports</span></div>
+   <div class="stat"><b id="s2">–</b><span class="label">Outlets</span></div>
+   <div class="stat"><b id="s5">–</b><span class="label">Official releases</span></div>
+   <div class="stat"><b id="s3">–</b><span class="label">High confidence</span></div>
+   <div class="stat"><b id="s4">–</b><span class="label">Tube read</span></div>
+  </div>
+  <div id="fw"><div id="feed" aria-live="polite"></div></div>
+  <div class="sec" style="margin-top:44px"><span class="label">§3 · Track record</span></div>
+  <div id="tr"></div>
+  <div class="eor">— END OF REPORT —</div>
+ </main>
+</div>
+<footer>Reports are AI-generated summaries of third-party reporting and may contain errors. Verify via the linked sources. General information only, not financial advice.</footer>
+<div class="cls bot">Unclassified // Open-source intelligence // For information only</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(u)?u:'#';
+
+/* ---------- SOUND (synthesised with WebAudio: no files) ---------- */
+const SFX=(()=>{
+ let ctx,unlocked=false,on=true;
+ try{on=localStorage.getItem('sfx')!=='0'}catch(e){}
+ const get=()=>{
+  if(!on||!unlocked)return null;
+  if(!ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ctx=new A()}catch(e){return null}}
+  if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+  return ctx};
+ const tone=(f,t0,d,o={})=>{const c=get();if(!c)return;const {type='sine',g=.03,f2}=o,t=c.currentTime+t0;
+  const os=c.createOscillator(),v=c.createGain();os.type=type;os.frequency.setValueAtTime(f,t);
+  if(f2)os.frequency.exponentialRampToValueAtTime(f2,t+d);
+  v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g,t+.006);v.gain.exponentialRampToValueAtTime(.0001,t+d);
+  os.connect(v).connect(c.destination);os.start(t);os.stop(t+d+.03)};
+ const noise=(t0,d,o={})=>{const c=get();if(!c)return;const {g=.03,f=2000,q=1}=o,t=c.currentTime+t0;
+  const n=Math.max(1,Math.floor(c.sampleRate*d)),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource();s.buffer=b;const fl=c.createBiquadFilter();fl.type='bandpass';fl.frequency.value=f;fl.Q.value=q;
+  const v=c.createGain();v.gain.value=g;s.connect(fl).connect(v).connect(c.destination);s.start(t)};
+ const api={
+  unlock(){unlocked=true},
+  isOn:()=>on,
+  set(v){on=v;try{localStorage.setItem('sfx',v?'1':'0')}catch(e){}},
+  hover(){tone(2400,0,.03,{g:.01})},
+  click(){tone(900,0,.045,{type:'square',g:.018,f2:600});noise(0,.025,{g:.03,f:3200})},
+  select(){noise(0,.26,{g:.026,f:1700,q:.7});tone(1400,.26,.06,{g:.011});tone(1050,.34,.07,{g:.011})},   // radio squelch + chirp (longer, quieter)
+  open(){tone(190,0,.06,{type:'square',g:.03,f2:120});tone(260,.08,.04,{type:'square',g:.02});noise(.08,.03,{g:.03,f:900})}, // relay clack
+  close(){tone(150,0,.06,{type:'square',g:.025,f2:95})},
+  ok(){[880,1100,1320].forEach((f,i)=>tone(f,i*.09,.08,{g:.03}))},
+  err(){tone(140,0,.28,{type:'sawtooth',g:.03,f2:100})},
+  boot(){noise(0,.18,{g:.035,f:1500,q:.6});tone(1200,.2,.05,{g:.02});tone(1600,.27,.05,{g:.02})}
+ };
+ return api})();
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>SFX.unlock(),{once:true,capture:true}));
+const sndBtn=$('#snd');
+const paintSnd=()=>{sndBtn.textContent=SFX.isOn()?'AUDIO ON':'AUDIO OFF';sndBtn.setAttribute('aria-pressed',SFX.isOn())};
+paintSnd();
+sndBtn.addEventListener('click',e=>{e.stopPropagation();SFX.unlock();SFX.set(!SFX.isOn());paintSnd();if(SFX.isOn())SFX.ok()});
+
+/* ---------- boot sequence ---------- */
+const bootP=new Promise(done=>{const b=$('#boot');let seen=false;try{seen=sessionStorage.getItem('boot')==='1';sessionStorage.setItem('boot','1')}catch(e){}
+ if(seen||matchMedia('(prefers-reduced-motion:reduce)').matches){b.remove();done();return}
+ const L=['RECON // UK ECONOMIC INTELLIGENCE','ESTABLISHING LINK ........ OK','SOURCE FEEDS .............. ONLINE','CORROBORATION ENGINE ...... READY'];
+ let i=0;const t=$('#bootTxt');const step=()=>{t.textContent=L.slice(0,++i).join('\n');if(i<L.length)setTimeout(step,260);else setTimeout(()=>{b.classList.add('off');setTimeout(()=>{b.remove();done()},500)},380)};step();
+ b.addEventListener('click',()=>{b.classList.add('off');setTimeout(()=>{b.remove();done()},400)})});
+
+/* ---------- clock / DTG ---------- */
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'],p2=n=>String(n).padStart(2,'0');
+function tick(){const d=new Date();$('#dtg').textContent=`DTG ${p2(d.getUTCDate())}${p2(d.getUTCHours())}${p2(d.getUTCMinutes())}Z ${MON[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`}
+tick();setInterval(tick,15000);
+
+/* ---------- KPI: policy rates ---------- */
+let RATES=null;
+function tminus(iso){const ms=new Date(iso)-Date.now();if(isNaN(ms))return '';if(ms<=0)return 'DECISION DUE';
+ const m=Math.floor(ms/6e4),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mm=m%60;
+ return d>0?`T-${d}D ${p2(h)}H`:`T-${p2(h)}H ${p2(mm)}M`}
+function renderRates(){
+ if(!RATES){$('#kpis').innerHTML='';return}
+ const a=new Date(RATES.asOf+'T00:00:00Z');
+ $('#kpis').innerHTML=RATES.banks.map((b,i)=>`<div class="kpi br" data-i="${i}">
+  <div class="kh"><span class="label">${esc(b.code)} · ${esc(b.rateLabel)}</span><span class="mono">RATE-0${i+1}</span></div>
+  <div class="kv">${esc(b.rate)}<small>${esc(b.unit||'%')}</small></div>
+  <div class="ksub">${esc(b.sub||'')}</div>
+  <div class="kr">
+   <div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span>${esc(b.lastMoveDetail)}</span></div>
+   <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span> · ${esc(b.nextLabel)}</span></div>
+   <div><span class="label">Market</span><span>${esc(b.market)}</span></div>
+  </div>
+  <div class="kfoot"><span>SRC ${esc(b.source.name).toUpperCase()}${b.stale?'<span class="stale">STALE</span>':''}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>
+  ${b.marketSource?`<div class="kfoot" style="margin-top:4px"><span>MKT PRICING ${esc(b.marketSource.name).toUpperCase()}</span><a href="${esc(safeUrl(b.marketSource.url))}" target="_blank" rel="noopener noreferrer">VIEW ↗</a></div>`:''}</div>`).join('');
+ $('#knote').textContent=`AS OF ${p2(a.getUTCDate())} ${MON[a.getUTCMonth()]} ${String(a.getUTCFullYear()).slice(2)} · MARKET PRICING IS INDICATIVE`;
+}
+setInterval(()=>document.querySelectorAll('.t-minus').forEach(e=>e.textContent=tminus(e.dataset.n)),30000);
+
+/* ---------- offline mode (Tube): service worker keeps the last brief ---------- */
+const netEl=$('#net'),paintNet=()=>{netEl.textContent=navigator.onLine?'':'OFFLINE · LAST BRIEF'};
+addEventListener('online',paintNet);addEventListener('offline',paintNet);paintNet();
+try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('/sw.js').catch(()=>{})}catch(e){}
+
+/* ---------- scramble / decode transition ---------- */
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const GL='█▓▒░#%&$@/\\|<>01=+*';
+const rg=()=>GL[Math.random()*GL.length|0];
+function tnodes(root){const out=[],w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>(n.nodeValue.trim()&&!n.parentElement.closest('.det,script,style'))?1:2});
+ let n;while(n=w.nextNode())out.push(n);return out}
+const sIndex=n=>{const st=n.parentElement.closest('.story');return st?Math.min(8,[...st.parentNode.children].indexOf(st)):0};
+function scrambleOut(root,ms){ // existing text corrupts into noise
+ if(REDUCED)return Promise.resolve();
+ const id=root.__run=(root.__run||0)+1,ns=tnodes(root).map(n=>({n,f:n.nodeValue,r:[...n.nodeValue].map(()=>Math.random())}));
+ return new Promise(res=>{const t0=performance.now();let last=0;
+  (function fr(now){if(id!==root.__run)return res();const p=Math.min(1,(now-t0)/ms);
+   if(now-last>40||p===1){last=now;ns.forEach(o=>{o.n.nodeValue=[...o.f].map((c,i)=>c===' '||c==='\n'?c:(o.r[i]<p*1.15?rg():c)).join('')})}
+   p<1?requestAnimationFrame(fr):res()})(t0)})}
+function scrambleIn(root,{dur=700,step=80}={}){ // noise resolves into the real text, staggered per report
+ if(REDUCED)return;
+ const id=root.__run=(root.__run||0)+1,ns=tnodes(root).map(n=>{const f=n.nodeValue;return{n,f,d:sIndex(n)*step,r:[...f].map(()=>Math.random())}});
+ ns.forEach(o=>o.n.nodeValue=[...o.f].map(c=>c===' '?c:rg()).join(''));
+ const total=dur+Math.max(0,...ns.map(o=>o.d)),sc=document.createElement('div');sc.className='scan';sc.style.setProperty('--sd',(total/1000+.15)+'s');
+ const host=root.id==='feed'?$('#fw'):root;if(host&&getComputedStyle(host).position!=='static'){host.appendChild(sc);requestAnimationFrame(()=>sc.classList.add('go'));setTimeout(()=>sc.remove(),total+400)}
+ const t0=performance.now();let last=0;
+ (function fr(now){if(id!==root.__run){ns.forEach(o=>o.n.nodeValue=o.f);return}
+  let done=true;const upd=now-last>45;
+  ns.forEach(o=>{const p=(now-t0-o.d)/dur;
+   if(p>=1){if(o.n.nodeValue!==o.f)o.n.nodeValue=o.f;return}
+   done=false;if(!upd)return;
+   o.n.nodeValue=[...o.f].map((c,i)=>c===' '||c==='\n'?c:(p>0&&p>o.r[i]*.85+(i/o.f.length)*.15?c:rg())).join('')});
+  if(upd)last=now;done?0:requestAnimationFrame(fr)})(t0)}
+const swap=async fn=>{ // used for every content change: corrupt -> re-render -> decode
+ $('#feed').setAttribute('aria-busy','true');
+ await scrambleOut($('#feed'),230);fn();
+ scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0});
+ $('#feed').removeAttribute('aria-busy')};
+
+/* ---------- reports ---------- */
+let ALL=[],TOPICS=[],topic='ALL',EVENTS={};
+function ago(iso){const m=Math.max(1,Math.round((Date.now()-new Date(iso))/6e4));return m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'}
+const conf=c=>({HIGH:3,MEDIUM:2,LOW:1}[c]||2);
+const LBL={'RATES & BOE':'Rates & BoE','UK ECONOMY':'UK economy','BANKING':'Banking','MARKETS':'Markets & stocks','PROPERTY':'Property & mortgages','FISCAL':'Fiscal & policy','ENERGY & TRADE':'Energy & trade'};
+const cap=t=>LBL[t]||(t.charAt(0)+t.slice(1).toLowerCase());
+const tubeMins=l=>Math.max(1,Math.round(l.reduce((n,s)=>n+[s.headline,s.summary,s.whyItMatters,...s.keyPoints].join(' ').split(/\s+/).length,0)/200));
+const prec=n=>n>=6?['FLASH','p2']:n>=4?['PRIORITY','p1']:['ROUTINE',''];
+const para=(t,src)=>`<p>${esc(t).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</p>`;
+const evLabel=id=>{const e=EVENTS[id];if(!e)return id;const d=new Date(e.date);return `${p2(d.getUTCDate())} ${MON[d.getUTCMonth()]} · ${e.label}`};
+const asmWords=a=>a?a.words:0;
+const callChip=c=>c.status==='RESOLVED'?(c.correct?`<span class="cs ok">✓ CORRECT</span> <span class="mono">actual: ${esc(c.actual)}</span>`:`<span class="cs no">✗ INCORRECT</span> <span class="mono">actual: ${esc(c.actual)}</span>`):c.status==='VOID'?'<span class="cs no">VOID · NO DATA</span>':'<span class="cs">PENDING</span>';
+const callRow=c=>`<div class="rxrow"><span class="label">Logged call</span><span><b class="mono" style="color:var(--ink)">${esc(c.bank)} · ${esc(c.expect)}</b> <span class="mono">${esc(evLabel(c.eventId))}</span> ${callChip(c)}</span></div>`;
+function sec(title,html){return html?`<section><h4>${title}</h4>${html}</section>`:''}
+function detail(s){
+ const a=s.assessment,an=s.analysis,src=s.sources;let h='';
+ h+=`<section class="top"><h4>Key points</h4><ul>${s.keyPoints.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></section>`;
+ h+=sec('Why it matters · UK angle',`<div class="prose"><p>${esc(s.whyItMatters)}</p></div>`);
+ if(!a)h+=`<div class="note">BRIEF · Built from headlines and short feed summaries. No primary-source text was available for this event, so there is no full assessment.</div>`;
+ if(a){
+  if(a.meta&&a.meta.note)h+=`<div class="note">${esc(a.meta.kind)} · ${esc(a.meta.note)}</div>`;
+  h+=sec('Situation',a.situation?.length?`<div class="prose">${a.situation.map(x=>para(x,src)).join('')}</div>`:'');
+  h+=sec('By the numbers',a.numbers?.length?`<table class="nums"><tr><th>Metric</th><th>Figure</th><th>Src</th></tr>${a.numbers.map(n=>`<tr><td>${esc(n.label)}${n.context?`<small>${esc(n.context)}</small>`:''}</td><td class="v">${esc(n.value)}</td><td class="s">[${n.source}]</td></tr>`).join('')}</table>`:'');
+  h+=sec('Background',a.background?.length?`<div class="prose">${a.background.map(x=>para(x,src)).join('')}</div>`:'');
+  h+=sec('Market reaction',a.market_reaction?.length?`<div class="prose">${a.market_reaction.map(x=>para(x,src)).join('')}</div>`:'');
+  const cmp=[...(a.compare||[])];
+  h+=sec('Sources compared',(cmp.length?`<div class="prose">${cmp.map(x=>para(x,src)).join('')}</div>`:'')+s.disagreements.map(d=>`<div class="dissent">${esc(d)}</div>`).join(''));
+  h+=sec('What to watch',a.watch?.length?`<ul class="watch">${a.watch.map(w=>`<li><span class="when">${esc(w.when)}</span><span>${esc(w.what).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</span></li>`).join('')}</ul>`:'');
+ }
+ h+=an?`<div class="rx br"><div class="rxh"><span>RECON ANALYSIS</span><span>AI OPINION · NOT FINANCIAL ADVICE</span></div>
+  <div class="thesis">${esc(an.thesis)}</div>
+  <div class="prose">${an.body.map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+  ${an.links?.length?`<div class="rxrow"><span class="label">Connects to</span><span class="chips">${an.links.map(l=>l.type==='report'?`<button class="chp" data-rpt="${l.ref}">RPT-${String(l.ref).padStart(4,'0')}</button>`:`<span class="chp">${esc(evLabel(l.ref))}</span>`).join('')}</span></div>`:''}
+  ${s.call?callRow(s.call):''}
+  ${an.counter?`<div class="rxrow"><span class="label">Counter-case</span><span>${esc(an.counter)}</span></div>`:''}
+  <div class="rxrow"><span class="label">Conviction</span><span><span class="sq">${[1,2,3].map(n=>`<i class="${n<=conf(an.conviction)?'f':''}"></i>`).join('')}</span> <span class="mono">${esc(an.conviction)}</span></span></div>
+  <div class="disc">Generated by RECON's AI from the report above, other recent reports and the events calendar. It is opinion, not fact, and may be wrong. Not financial advice.</div></div>`:'';
+ h+=sec(`Sources (${s.sourceCount})`,`<div class="srcs">${src.map((x,i)=>`<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">[${i+1}]</span> ${esc(x.name)} ↗</a>`).join('')}</div>`);
+ return h}
+const isRel=s=>s.kind==='RELEASE';
+function renderAo(){
+ $('#ao').innerHTML=['ALL','__OFFICIAL__',...TOPICS].map(t=>`<button class="${t===topic?'on':''}" data-t="${esc(t)}">${t==='ALL'?'All sectors':t==='__OFFICIAL__'?'Official releases':esc(cap(t))}<span>${t==='ALL'?ALL.length:t==='__OFFICIAL__'?ALL.filter(isRel).length:ALL.filter(s=>s.topic===t).length}</span></button>`).join('')}
+function render(){
+ const list=topic==='ALL'?ALL:topic==='__OFFICIAL__'?ALL.filter(isRel):ALL.filter(s=>s.topic===topic);
+ renderAo();
+ $('#s1').textContent=ALL.filter(s=>!isRel(s)).length;
+ $('#s5').textContent=ALL.filter(isRel).length;
+ $('#s2').textContent=new Set(ALL.flatMap(s=>s.sources.map(x=>x.name))).size;
+ $('#s3').textContent=ALL.filter(s=>s.confidence==='HIGH').length;
+ $('#s4').textContent=ALL.length?tubeMins(ALL)+' min':'–';
+ $('#feed').innerHTML=list.length?list.map(s=>{const c=conf(s.confidence),[pl,pc]=isRel(s)?['OFFICIAL','p2']:prec(s.sourceCount);return `<article class="story" id="rpt-${s.id}" data-id="${s.id}">
+  <div class="idx">RPT-${String(s.id).padStart(4,'0')}</div>
+  <div>
+   <div class="meta1"><span class="prec ${pc}">${pl}</span><span class="label">${esc(s.topic)}</span><span class="mono">${ago(s.updatedAt)}</span></div>
+   <h2>${esc(s.headline)}</h2>
+   <p class="bluf"><b>BLUF</b>${esc(s.summary)}</p>
+   ${s.analysis?`<p class="take"><b>RECON TAKE</b>${esc(s.analysis.thesis)}</p>`:''}
+   <div class="meta2">
+    ${isRel(s)?`<span><span class="label">Source</span><span class="mono">${esc((s.sources[0]||{}).name||'')} · PRIMARY DOCUMENT</span></span>`:`<span><span class="label">Sources</span><span class="mono">${s.sourceCount}</span></span>
+    <span><span class="label">Confidence</span><span class="sq">${[1,2,3].map(n=>`<i class="${n<=c?'f':''}"></i>`).join('')}</span><span class="mono">${esc(s.confidence)}</span></span>`}
+    <button class="tog" aria-expanded="false">${s.assessment&&s.assessment.situation&&s.assessment.situation.length?'Assessment'+(s.readMins?' · '+s.readMins+' min':''):'Details'}</button>
+   </div>
+   <div class="det br">${detail(s)}</div>
+  </div></article>`}).join(''):`<div class="empty">No corroborated reporting in this sector. Reports are published once three or more outlets confirm the same event.</div>`;
+}
+
+/* ---------- track record ---------- */
+const pc=x=>x==null?'–':Math.round(x*100)+'%';
+function renderTR(d){
+ const el=$('#tr');if(!d){el.innerHTML='';return}
+ const m=d.summary;
+ el.innerHTML=`<div class="trs">
+  <div class="stat"><b>${m.total}</b><span class="label">Calls logged</span><small>${m.pending} pending</small></div>
+  <div class="stat"><b>${pc(m.hitRate)}</b><span class="label">RECON hit rate</span><small>n=${m.resolved} resolved</small></div>
+  <div class="stat"><b>${pc(m.marketHitRate)}</b><span class="label">Market favourite</span><small>n=${m.marketResolved}, same calls</small></div></div>
+  ${d.calls.length?`<table class="nums tr"><tr><th>Event</th><th>RECON call</th><th>Market favourite</th><th>Result</th></tr>${d.calls.slice(0,12).map(c=>`<tr><td>${esc(evLabel(c.eventId))}<small>${esc(c.headline||'')}</small></td><td class="v">${esc(c.bank)} · ${esc(c.expect)}${c.conviction?`<small>${esc(c.conviction)} conviction</small>`:''}</td><td class="v">${c.marketExpect?esc(c.marketExpect)+`<small>${Math.round(c.marketPct)}% priced</small>`:'–'}</td><td>${callChip(c)}</td></tr>`).join('')}</table>`:'<div class="empty" style="padding:24px 0">No calls logged yet. Calls appear here before the event they concern.</div>'}
+  <p class="trn">${m.resolved===0?'No calls resolved yet. ':m.resolved<20?`Small sample (n=${m.resolved}): treat as indicative. `:''}Calls are logged before the event, cannot be edited afterwards, and are scored automatically against the published policy rate. Only BoE, Fed and ECB rate decisions are scored for now. “Market favourite” is the outcome priced as most likely when the call was made: if RECON only matches it, the analysis adds little.</p>`;
+}
+
+/* ---------- deep links: #rpt-12 opens a report ---------- */
+function openReport(id){
+ if(topic!=='ALL'){topic='ALL';render()}
+ const st=document.getElementById('rpt-'+id);if(!st)return;
+ st.classList.add('open');const g=st.querySelector('.tog');if(g)g.setAttribute('aria-expanded','true');
+ st.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+}
+function openHash(){const m=/^#rpt-(\d+)$/.exec(location.hash);if(m)openReport(+m[1])}
+addEventListener('hashchange',openHash);
+
+/* ---------- interaction ---------- */
+document.addEventListener('click',e=>{
+ const t=e.target.closest('#ao button');if(t){if(t.dataset.t===topic)return;topic=t.dataset.t;SFX.select();renderAo();swap(render);return}
+ const g=e.target.closest('.tog');if(g){const st=g.closest('.story');const o=st.classList.toggle('open');g.setAttribute('aria-expanded',o);o?SFX.open():SFX.close();return}
+ const rp=e.target.closest('[data-rpt]');if(rp){SFX.click();openReport(+rp.dataset.rpt);return}
+ if(e.target.closest('.srcs a,.kfoot a'))SFX.click();
+});
+let lastH=null;
+document.addEventListener('mouseover',e=>{
+ const t=e.target.closest('#ao button,.srcs a,.go,.tog,.kfoot a');
+ if(t===lastH)return;lastH=t;if(!t)return;
+ SFX.hover()});
+$('#f').addEventListener('submit',async e=>{
+ e.preventDefault();const b=$('#go'),m=$('#msg');b.disabled=true;m.className='msg';m.textContent='Transmitting…';SFX.click();
+ try{const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value,topics:topic==='ALL'?[]:[topic]})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+  m.textContent='Check your inbox to confirm.';$('#em').value='';SFX.ok();
+ }catch(err){m.className='msg er';m.textContent=err.message;SFX.err()}
+ b.disabled=false;
+});
+function subscribedBanner(){if(location.hash==='#subscribed'){$('#msg').className='msg';$('#msg').textContent="You're subscribed. Your first brief arrives at 07:00 UK time.";history.replaceState(null,'',location.pathname+location.search)}}
+subscribedBanner();addEventListener('hashchange',subscribedBanner);
+fetch('/api/stories').then(r=>r.json()).then(async d=>{ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};render();openHash();await bootP;scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0})}).catch(()=>{$('#feed').innerHTML='<div class="empty">Feed offline.</div>'});
+fetch('/api/trackrecord').then(r=>r.json()).then(renderTR).catch(()=>renderTR(null));
+fetch('/api/rates').then(r=>r.json()).then(async d=>{RATES=d;renderRates();await bootP;scrambleIn($('#kpis'),{dur:800,step:0})}).catch(()=>{$('#kpis').innerHTML='<div class="empty" style="grid-column:1/-1">Rate data unavailable.</div>'});
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "note": "Upcoming events the RECON Analysis may link to. Maintained manually: add ONS release dates (CPI, GDP, labour market), Budget/fiscal events, major results days from official calendars. Only include dates you have verified.",
+  "events": [
+    { "id": "boe-2026-11-05", "date": "2026-11-05T12:00:00Z", "label": "Bank of England rate decision and Monetary Policy Report" },
+    { "id": "fed-2026-12-09", "date": "2026-12-09T19:00:00Z", "label": "US Federal Reserve rate decision (meeting 8-9 Dec)" },
+    { "id": "ecb-2026-12-17", "date": "2026-12-17T13:15:00Z", "label": "ECB rate decision (meeting 16-17 Dec)" },
+    { "id": "boe-2026-12-17", "date": "2026-12-17T12:00:00Z", "label": "Bank of England rate decision" }
+  ]
+}
