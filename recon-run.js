@@ -1126,66 +1126,139 @@ ${html}`);
       await transport.sendMail({ from: FROM(), to, subject, html, text, headers });
     }
     async function sendConfirmation(sub) {
-      const link = `${BASE()}/confirm?token=${sub.token}`;
+      const link2 = `${BASE()}/confirm?token=${sub.token}`;
       await send(
         sub.email,
         "RECON \xB7 Confirm your subscription",
-        shell(`<p style="margin:0 0 16px">Confirm to receive the daily briefing.</p><p><a href="${link}" style="background:#fff;color:#000;padding:12px 18px;text-decoration:none;font-weight:700;letter-spacing:.12em;font-size:12px">CONFIRM SUBSCRIPTION</a></p><p style="color:#888;font-size:12px;margin-top:24px">If you didn't request this, ignore this email and you won't be added.</p>`),
-        `Confirm your subscription: ${link}`
+        shell(`<p style="margin:0 0 16px">Confirm to receive the daily briefing.</p><p><a href="${link2}" style="background:#fff;color:#000;padding:12px 18px;text-decoration:none;font-weight:700;letter-spacing:.12em;font-size:12px">CONFIRM SUBSCRIPTION</a></p><p style="color:#888;font-size:12px;margin-top:24px">If you didn't request this, ignore this email and you won't be added.</p>`),
+        `Confirm your subscription: ${link2}`
       );
     }
     function shell(inner) {
       return `<div style="background:#000;padding:24px;font-family:Helvetica,Arial,sans-serif;color:#b3b3b3"><div style="max-width:600px;margin:auto;border:1px solid #242424;padding:28px"><div style="color:#fff;letter-spacing:.3em;font-size:13px;font-weight:700;margin-bottom:4px">RECON</div><div style="color:#7a7a7a;letter-spacing:.14em;font-size:10px;margin-bottom:20px">UK MORNING BRIEF</div>${inner}</div></div>`;
     }
-    function ratesLine() {
+    var DAILY_STORIES = () => +(process.env.DAILY_STORIES || 3);
+    var loadRates = () => {
       try {
-        const r = JSON.parse(fs.readFileSync(require_paths().RATES, "utf8"));
-        return r.banks.map((b) => `${esc(b.code)} <b style="color:#fff">${esc(b.rate)}${esc(b.unit || "%")}</b>`).join(" &nbsp;\xB7&nbsp; ");
+        return JSON.parse(fs.readFileSync(require_paths().RATES, "utf8"));
+      } catch {
+        return null;
+      }
+    };
+    var MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    var readMins = (stories) => Math.max(1, Math.round(stories.reduce((n, s) => n + [s.headline, s.summary, s.why_it_matters, ...JSON.parse(s.key_points)].join(" ").split(/\s+/).length, 0) / 200));
+    var T = { bg: "#000000", ink: "#f2f2f2", sub: "#b3b3b3", mute: "#7a7a7a", line: "#242424", line2: "#3a3a3a", panel: "#0a0a0a" };
+    var SANS = "Inter,'Helvetica Neue',Helvetica,Arial,sans-serif";
+    var MONO = "ui-monospace,'SF Mono',Menlo,Consolas,'Courier New',monospace";
+    var label = (txt, extra = "") => `<span style="font-family:${SANS};font-size:11px;line-height:1;letter-spacing:.14em;text-transform:uppercase;color:${T.mute};${extra}">${txt}</span>`;
+    var mono = (txt, extra = "") => `<span style="font-family:${MONO};font-size:11px;letter-spacing:.04em;color:${T.mute};${extra}">${txt}</span>`;
+    var strip = (pos) => `<div style="background:${T.ink};color:#000000;text-align:center;font-family:${SANS};font-weight:600;font-size:9px;line-height:1;letter-spacing:.2em;padding:6px 8px;text-transform:uppercase">Unclassified // Open-source intelligence // For information only</div>`;
+    var sec = (txt) => `<div style="margin:30px 0 14px;padding-bottom:9px;border-bottom:1px solid ${T.line}">${label(txt)}</div>`;
+    var min = (h) => h.replace(/>\s+</g, "><").replace(/\s*\n\s*/g, " ");
+    var dtg = (d = /* @__PURE__ */ new Date()) => {
+      const p = (n) => String(n).padStart(2, "0");
+      return `DTG ${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}Z ${MON[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`;
+    };
+    var tminus = (iso) => {
+      const ms = new Date(iso) - Date.now();
+      if (isNaN(ms)) return "";
+      if (ms <= 0) return "DECISION DUE";
+      const m = Math.floor(ms / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60;
+      const p = (n) => String(n).padStart(2, "0");
+      return d > 0 ? `T-${d}D ${p(h)}H` : `T-${p(h)}H ${p(mm)}M`;
+    };
+    var ago = (iso) => {
+      const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 6e4));
+      return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m / 60) + "h ago" : Math.round(m / 1440) + "d ago";
+    };
+    var squares = (c) => {
+      const n = { HIGH: 3, MEDIUM: 2, LOW: 1 }[c] || 2;
+      return [1, 2, 3].map((i) => `<span style="color:${i <= n ? T.ink : T.mute}">${i <= n ? "&#9632;" : "&#9633;"}</span>`).join("&nbsp;");
+    };
+    var tag = (txt, kind) => kind === "solid" ? `<span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.16em;background:${T.ink};color:#000000;padding:2px 6px;border:1px solid ${T.ink}">${txt}</span>` : `<span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.16em;color:${kind === "ink" ? T.ink : T.sub};padding:2px 6px;border:1px solid ${kind === "ink" ? T.ink : T.line2}">${txt}</span>`;
+    function kpiBoard() {
+      const r = loadRates();
+      if (!r || !r.banks || !r.banks.length) return "";
+      const row = (k, v) => `<tr><td width="74" valign="top" style="padding:0;font-family:${SANS};font-size:12.5px;line-height:1.4">${label(k, "font-size:10px")}</td><td valign="top" style="padding:0 0 7px;font-family:${SANS};font-size:12.5px;line-height:1.4;color:${T.sub}">${v}</td></tr>`;
+      const card = (b, i) => {
+        const nx = new Date(b.next), when = isNaN(nx) ? esc(b.nextLabel || "") : `${String(nx.getUTCDate()).padStart(2, "0")} ${MON[nx.getUTCMonth()]}`;
+        return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${T.panel};border:1px solid ${T.line};margin:0 0 10px"><tr><td style="padding:16px 18px">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td>${label(`${esc(b.code)} &middot; ${esc(b.rateLabel)}`)}</td><td align="right">${mono(`RATE-0${i + 1}`)}</td></tr></table>
+<div style="margin-top:14px;font-family:${SANS};font-weight:600;font-size:34px;line-height:1.1;letter-spacing:-.03em;color:#ffffff">${esc(b.rate)}<span style="font-size:16px;font-weight:500;color:${T.sub}">${esc(b.unit || "%")}</span></div><div style="margin-top:4px;min-height:14px">${mono(esc(b.sub || ""), "font-size:10.5px")}</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;border-top:1px solid ${T.line}"><tr><td style="padding-top:10px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${row("Last", `${tag(esc(b.lastMove), "ink")} ${esc(b.lastMoveDetail || "")}`)}${row("Next", `<span style="font-family:${MONO};color:${T.ink}">${tminus(b.next)}</span> &middot; ${when}`)}${row("Market", `${esc(b.market || "")}${b.stale ? ` ${tag("STALE", "dim")}` : ""}`)}</table></td></tr></table></td></tr></table>`;
+      };
+      return `${sec("&sect;1 &middot; Policy rates")}${r.banks.map(card).join("")}<div style="margin:-2px 0 0">${mono(`AS OF ${String(r.asOf || "").toUpperCase()} &middot; MARKET PRICING IS INDICATIVE`, "font-size:10.5px")}</div>`;
+    }
+    function storiesFor(topics, now = Date.now()) {
+      const since = new Date(now - 30 * 36e5).toISOString().replace("T", " ").slice(0, 19);
+      let rows = db2.prepare(`SELECT * FROM stories WHERE updated_at >= ?`).all(since);
+      if (topics && topics.length) rows = rows.filter((r) => topics.includes(r.topic));
+      const base = (r) => (r.kind === "RELEASE" ? 1.5 : r.source_count) + (r.analysis ? 1.5 : 0) + ({ HIGH: 1, MEDIUM: 0.5, PRIMARY: 0.8 }[r.confidence] || 0) + (r.read_mins ? 0.5 : 0);
+      const picked = [];
+      while (picked.length < DAILY_STORIES() && rows.length) {
+        const sc = rows.map((r) => [r, base(r) - (picked.some((p) => p.topic === r.topic) ? 1.5 : 0)]).sort((a, b) => b[1] - a[1]);
+        picked.push(sc[0][0]);
+        rows = rows.filter((r) => r.id !== sc[0][0].id);
+      }
+      const extra = +(process.env.BRIEF_RELEASES || 0);
+      const releases = extra ? rows.filter((r) => r.kind === "RELEASE").slice(0, extra) : [];
+      return { reports: picked, releases, all: [...picked, ...releases] };
+    }
+    var callLine = (s) => {
+      try {
+        const c = db2.prepare("SELECT bank,expect,event_id,status,actual,correct FROM calls WHERE story_id=? ORDER BY id LIMIT 1").get(s.id);
+        if (!c) return "";
+        const m = /(\d{4})-(\d{2})-(\d{2})$/.exec(c.event_id), ev = m ? `${+m[3]} ${MON[+m[2] - 1]}` : c.event_id;
+        return `LOGGED CALL &middot; ${c.bank} ${c.expect} &middot; ${ev} &middot; ${c.status === "RESOLVED" ? c.correct ? "CORRECT" : "INCORRECT" : "PENDING"}`;
       } catch {
         return "";
       }
+    };
+    var link = (id) => process.env.SITE_URL || process.env.BASE_URL ? `${(process.env.SITE_URL || process.env.BASE_URL).replace(/\/$/, "")}/#rpt-${id}` : "";
+    var precOf = (s) => s.kind === "RELEASE" ? ["OFFICIAL", "solid"] : s.source_count >= 6 ? ["FLASH", "solid"] : s.source_count >= 4 ? ["PRIORITY", "ink"] : ["ROUTINE", "dim"];
+    function storyHTML(s) {
+      const pts = JSON.parse(s.key_points), srcs = JSON.parse(s.sources), an = s.analysis ? JSON.parse(s.analysis) : null, l = link(s.id), call = callLine(s), [pl, pk] = precOf(s);
+      const metaRight = s.kind === "RELEASE" ? `${label("Source", "margin-right:8px")}${mono(`${esc((srcs[0] || {}).name || "")} &middot; PRIMARY DOCUMENT`, "color:" + T.sub)}` : `${label("Sources")}&nbsp;${mono(String(s.source_count), "color:" + T.sub)} &nbsp;&nbsp; ${label("Confidence")}&nbsp;${squares(s.confidence)}&nbsp;${mono(esc(s.confidence), "color:" + T.sub)}`;
+      return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line};table-layout:fixed"><tr><td style="padding:26px 0 24px;word-wrap:break-word;overflow-wrap:break-word">
+<div style="margin-bottom:12px">${mono(`RPT-${String(s.id).padStart(4, "0")}`)}&nbsp;&nbsp;${tag(pl, pk)}&nbsp;&nbsp;${label(esc(s.topic))}&nbsp;&nbsp;${mono(ago(s.updated_at.replace(" ", "T") + "Z"))}</div>
+<div style="font-family:${SANS};font-weight:600;font-size:21px;line-height:1.3;letter-spacing:-.015em;color:#ffffff;margin:0 0 10px">${esc(s.headline)}</div>
+<div style="font-family:${SANS};font-size:15px;line-height:1.6;color:${T.sub}"><b style="font-size:11px;letter-spacing:.14em;color:${T.ink}">BLUF</b>&nbsp;&nbsp;${esc(s.summary)}</div>
+${an ? `<div style="margin-top:14px;padding-left:12px;border-left:2px solid ${T.ink};font-family:${SANS};font-size:14.5px;line-height:1.55;color:${T.ink}"><span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.14em;background:${T.ink};color:#000000;padding:3px 6px">RECON TAKE</span>&nbsp;&nbsp;${esc(an.thesis)}</div>` : ""}
+${call ? `<div style="margin-top:8px;font-family:${MONO};font-size:10.5px;letter-spacing:.06em;color:${T.mute}">${call}</div>` : ""}
+<div style="margin-top:14px">${metaRight}</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:16px;background:${T.panel};border:1px solid ${T.line}"><tr><td style="padding:16px 18px">
+<div>${label("Key findings")}</div>${pts.map((x) => `<div style="font-family:${SANS};font-size:14px;line-height:1.5;color:${T.sub};padding:5px 0 0 16px;text-indent:-16px"><span style="color:${T.mute}">&mdash;</span>&nbsp;${esc(x)}</div>`).join("")}
+${s.why_it_matters ? `<div style="margin-top:14px">${label("Why it matters &middot; UK angle")}</div><div style="font-family:${SANS};font-size:14px;line-height:1.55;color:${T.sub};margin-top:6px">${esc(s.why_it_matters)}</div>` : ""}
+</td></tr></table>
+<div style="margin-top:14px;font-family:${SANS};font-size:12.5px;line-height:1.4;color:${T.sub}"><div style="margin-bottom:8px">${label("Sources")}</div>${srcs.map((x) => `<a href="${esc(x.url)}" style="display:inline-block;color:${T.sub};text-decoration:none;border:1px solid ${T.line2};padding:3px 8px;margin:0 4px 6px 0;line-height:1.4;white-space:nowrap">${esc(x.name)}&nbsp;&#8599;</a>`).join("&#32;")}</div>
+${s.read_mins && l ? `<div style="margin-top:14px"><a href="${esc(l)}" style="font-family:${SANS};font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${T.ink};text-decoration:none;border-bottom:1px solid ${T.mute};padding-bottom:2px">Assessment &middot; ${s.read_mins} min &rarr;</a></div>` : ""}
+</td></tr></table>`;
     }
-    var readMins = (stories) => Math.max(1, Math.round(stories.reduce((n, s) => n + [s.headline, s.summary, s.why_it_matters, ...JSON.parse(s.key_points)].join(" ").split(/\s+/).length, 0) / 200));
-    function take(s) {
-      const an = s.analysis ? JSON.parse(s.analysis) : null;
-      const link = `${BASE()}/#rpt-${s.id}`;
-      return (an ? `<div style="font-size:13px;line-height:1.55;margin-top:10px;padding-left:10px;border-left:2px solid #fff;color:#ddd"><b style="color:#fff;font-size:10px;letter-spacing:.14em">RECON TAKE</b>&nbsp; ${esc(an.thesis)}</div>` : "") + (s.read_mins ? `<div style="margin-top:8px;font-size:12px"><a href="${esc(link)}" style="color:#fff">Full assessment \xB7 ${s.read_mins} min read \u2192</a></div>` : "");
+    var dateLong = () => (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" });
+    var subjectFor = (sel) => `RECON ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" })} \xB7 ${sel.all[0] ? sel.all[0].headline.replace(/^(DEMO REPORT|SAMPLE[A-Z :]*): ?/, "").slice(0, 70) : "UK morning brief"}`;
+    function briefBody(sel, { footer = "" } = {}) {
+      const mins = readMins(sel.all);
+      const releases = sel.releases.length ? `${sec("&sect;3 &middot; Official releases")}${sel.releases.map(storyHTML).join("")}` : "";
+      const html = min(`<div style="background:${T.bg};font-family:${SANS};color:${T.ink}">${strip()}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line}"><tr><td style="padding:16px 20px"><span style="font-family:${SANS};font-weight:700;font-size:15px;letter-spacing:.32em;color:#ffffff">RECON</span></td><td align="right" style="padding:16px 20px">${mono(dtg())}</td></tr></table>
+<div style="padding:26px 20px 8px">${label("UK morning brief")}<div style="font-family:${SANS};font-weight:600;font-size:24px;line-height:1.25;letter-spacing:-.02em;color:#ffffff;margin:10px 0 6px">${esc(dateLong())}</div><div style="font-family:${SANS};font-size:14px;line-height:1.5;color:${T.sub}">Policy rates, then the day's main reports. Tube read ${mins} min.</div>
+${kpiBoard()}${sec("&sect;2 &middot; Intelligence reports")}${sel.reports.map(storyHTML).join("") || `<p style="color:${T.sub}">No corroborated stories yet today.</p>`}${releases}
+<div style="padding:22px 0 20px;font-family:${SANS};font-size:12px;line-height:1.6;color:${T.mute}">AI-generated summaries of third-party reporting; may contain errors. Verify via the linked sources. General information only, not financial advice.${footer}</div></div>${strip()}</div>`);
+      return { mins, html };
     }
-    function storiesFor(topics) {
-      const since = new Date(Date.now() - 30 * 36e5).toISOString().replace("T", " ").slice(0, 19);
-      let rows = db2.prepare(`SELECT * FROM stories WHERE updated_at >= ? ORDER BY source_count DESC, updated_at DESC`).all(since);
-      if (topics.length) rows = rows.filter((r) => topics.includes(r.topic));
-      const reports = rows.filter((r) => r.kind !== "RELEASE").slice(0, 8);
-      const releases = rows.filter((r) => r.kind === "RELEASE").slice(0, 6);
-      return { reports, releases, all: [...reports, ...releases] };
-    }
-    function officialBlock(releases) {
-      if (!releases.length) return "";
-      return `<div style="border-top:1px solid #242424;padding:18px 0 4px"><div style="color:#fff;font-size:10px;letter-spacing:.18em;margin-bottom:10px">OFFICIAL RELEASES \xB7 PRIMARY SOURCES</div>${releases.map((r) => {
-        const src = JSON.parse(r.sources)[0] || {};
-        return `<div style="margin:0 0 12px;font-size:13px;line-height:1.55"><span style="color:#7a7a7a;font-size:10px;letter-spacing:.12em">${esc(src.name || "").toUpperCase()}</span><br><a href="${esc(BASE())}/#rpt-${r.id}" style="color:#fff;font-weight:600;text-decoration:none">${esc(r.headline)}</a><br><span style="color:#999">${esc(r.summary)}</span></div>`;
-      }).join("")}</div>`;
-    }
-    function render(sub, { reports: stories, releases }) {
+    function render(sub, sel) {
       const unsub = sub.unsubUrl || `${BASE()}/unsubscribe?token=${sub.token}`;
-      const mins = readMins([...stories, ...releases]), rl = ratesLine();
-      const date = (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-      const body = stories.map((s, i) => {
-        const pts = JSON.parse(s.key_points), srcs = JSON.parse(s.sources);
-        return `<div style="border-top:1px solid #242424;padding:18px 0">
-<div style="color:#7a7a7a;font-size:10px;letter-spacing:.14em">${String(i + 1).padStart(2, "0")} \xB7 ${esc(s.topic)} \xB7 ${s.source_count} SOURCES \xB7 CONFIDENCE ${esc(s.confidence)}</div>
-<div style="font-size:18px;font-weight:600;color:#fff;margin:8px 0">${esc(s.headline)}</div>
-<div style="font-size:14px;line-height:1.6"><b style="color:#fff;font-size:10px;letter-spacing:.14em">BLUF</b>&nbsp; ${esc(s.summary)}</div>${take(s)}
-<ul style="font-size:13px;color:#999;padding-left:18px">${pts.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
-<div style="font-size:12px;color:#7a7a7a">${srcs.map((x) => `<a href="${esc(x.url)}" style="color:#fff">${esc(x.name)}</a>`).join(" \xB7 ")}</div></div>`;
-      }).join("");
-      const html = shell(`<div style="font-size:12px;color:#7a7a7a;margin-bottom:4px">${esc(date)} &nbsp;\xB7&nbsp; TUBE READ ${mins} MIN</div>${rl ? `<div style="font-size:11px;letter-spacing:.08em;color:#7a7a7a;margin:6px 0 14px">POLICY RATES &nbsp; ${rl}</div>` : ""}${officialBlock(releases)}${body || (releases.length ? "" : "<p>No corroborated stories today.</p>")}
-<p style="font-size:11px;color:#666;border-top:1px solid #242424;padding-top:16px;margin-top:8px">AI-generated summaries of reporting by third-party outlets; verify via the linked sources. General information, not financial advice.<br><a href="${unsub}" style="color:#999">Unsubscribe</a></p>`);
-      const text = [...releases.map((r) => `[OFFICIAL] ${r.headline}
+      const { mins, html: body } = briefBody(sel, { footer: `<br><a href="${unsub}" style="color:${T.sub}">Unsubscribe</a>` });
+      const html = `<div style="background:${T.bg};padding:0"><div style="max-width:660px;margin:0 auto">${body}</div></div>`;
+      const rt = (loadRates() || { banks: [] }).banks.map((b) => `${b.code} ${b.rate}${b.unit || "%"} (${b.lastMove}; next ${b.nextLabel}; ${b.market})`).join("\n");
+      const text = `RECON // UK MORNING BRIEF
+
+POLICY RATES
+${rt}
+
+` + sel.all.map((r, i) => `${i + 1}. ${r.headline}
 ${r.summary}
-${JSON.parse(r.sources)[0].url}`), ...stories.map((s, i) => `${i + 1}. ${s.headline}
-${s.summary}
-${JSON.parse(s.sources).map((x) => x.url).join("\n")}`)].join("\n\n") + `
+${JSON.parse(r.sources).map((x) => x.url).join("\n")}`).join("\n\n") + `
 
 Unsubscribe: ${unsub}`;
       return { html, text, unsub, mins };
@@ -1199,7 +1272,7 @@ Unsubscribe: ${unsub}`;
         if (!sel.all.length) continue;
         const { html, text, unsub, mins } = render(sub, sel);
         try {
-          await send(sub.email, `RECON \xB7 ${sel.reports.length} reports${sel.releases.length ? ` + ${sel.releases.length} official` : ""} \xB7 ${mins}-min read`, html, text, { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" });
+          await send(sub.email, subjectFor(sel), html, text, { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" });
           db2.prepare(`UPDATE subscribers SET last_sent_at=datetime('now') WHERE id=?`).run(sub.id);
           sent++;
         } catch (e) {
@@ -1215,10 +1288,10 @@ Unsubscribe: ${unsub}`;
       if (!sel.all.length) return { sent: false, reason: "no stories in the last 30 hours yet" };
       const sub = { email, token: "test-send" };
       const { html, text, unsub, mins } = render(sub, sel);
-      await send(email, `[TEST] RECON \xB7 ${sel.reports.length} reports${sel.releases.length ? ` + ${sel.releases.length} official` : ""} \xB7 ${mins}-min read`, html, text, {});
+      await send(email, "[TEST] " + subjectFor(sel), html, text, {});
       return { sent: true };
     }
-    module2.exports = { sendConfirmation, sendDaily, sendTo, storiesFor, readMins, render };
+    module2.exports = { sendConfirmation, sendDaily, sendTo, storiesFor, readMins, render, briefBody, subjectFor, kpiBoard };
   }
 });
 
@@ -1237,27 +1310,38 @@ var require_buttondown = __commonJS({
       return l.hour >= 7 && (!last || last.value !== l.day);
     }
     var markSent = (now = /* @__PURE__ */ new Date()) => db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('last_brief_day',?)").run(londonNow(now).day);
-    function markdown(sel, { mins, rates, date }) {
-      const link = (id) => SITE() ? `${SITE()}/#rpt-${id}` : "";
-      const out = [`**${date}** \xB7 Tube read ${mins} min` + (rates ? `
-
-Policy rates: ${rates}` : "")];
-      if (sel.releases.length) {
-        out.push("## Official releases");
-        for (const r of sel.releases) {
-          const s = JSON.parse(r.sources)[0] || {};
-          out.push(`- **${s.name}**: [${r.headline}](${link(r.id) || s.url}). ${r.summary}`);
+    var nl2 = require_newsletter();
+    function markdown(sel, { mins, date }) {
+      const rates = (() => {
+        try {
+          return JSON.parse(fs.readFileSync(require_paths().RATES, "utf8"));
+        } catch {
+          return null;
         }
+      })();
+      const out = [`**${date}** \xB7 Tube read ${mins} min`];
+      if (rates && rates.banks) {
+        const bs = rates.banks;
+        out.push(`| | ${bs.map((b) => `${b.code} ${b.rateLabel}`).join(" | ")} |
+|---|${bs.map(() => "---").join("|")}|
+| **Rate** | ${bs.map((b) => `**${b.rate}${b.unit || "%"}**`).join(" | ")} |
+| Last | ${bs.map((b) => `${b.lastMove}: ${b.lastMoveDetail}`).join(" | ")} |
+| Next | ${bs.map((b) => b.nextLabel).join(" | ")} |
+| Market | ${bs.map((b) => b.market).join(" | ")} |`);
       }
-      out.push("## Reports");
-      sel.reports.forEach((r, i) => {
-        const an = r.analysis ? JSON.parse(r.analysis) : null, srcs = JSON.parse(r.sources);
+      const link = (id) => SITE() ? `${SITE()}/#rpt-${id}` : "";
+      sel.all.forEach((r, i) => {
+        const an = r.analysis ? JSON.parse(r.analysis) : null, srcs = JSON.parse(r.sources), pts = JSON.parse(r.key_points);
         out.push(`### ${i + 1}. ${r.headline}
-*${r.topic} \xB7 ${r.source_count} sources \xB7 confidence ${r.confidence}*
+*${r.kind === "RELEASE" ? "Official release" : `${r.topic} \xB7 ${r.source_count} sources \xB7 confidence ${r.confidence}`}*
 
 **BLUF** ${r.summary}` + (an ? `
 
-> **RECON take:** ${an.thesis}` : "") + (r.read_mins && link(r.id) ? `
+> **RECON take:** ${an.thesis}` : "") + `
+
+${pts.map((x) => `- ${x}`).join("\n")}` + (r.why_it_matters ? `
+
+**UK angle:** ${r.why_it_matters}` : "") + (r.read_mins && link(r.id) ? `
 
 [Full assessment \xB7 ${r.read_mins} min read](${link(r.id)})` : "") + `
 
@@ -1266,19 +1350,23 @@ Sources: ${srcs.map((x) => `[${x.name}](${x.url})`).join(" \xB7 ")}`);
       out.push("---\n*AI-generated summaries of reporting by third-party outlets; verify via the linked sources. General information, not financial advice.*");
       return out.join("\n\n");
     }
+    function body(sel, extra) {
+      const { mins, html } = nl2.briefBody(sel);
+      if (process.env.BRIEF_FORMAT === "markdown") return markdown(sel, { mins, date: extra.date });
+      return html;
+    }
     async function publish(sel, extra) {
       if (!process.env.BUTTONDOWN_API_KEY) throw new Error("BUTTONDOWN_API_KEY not set");
-      const body = markdown(sel, extra);
-      const subject = `RECON \xB7 ${sel.reports.length} reports${sel.releases.length ? ` + ${sel.releases.length} official` : ""} \xB7 ${extra.mins}-min read`;
+      const subject = nl2.subjectFor(sel);
       const res = await fetch("https://api.buttondown.email/v1/emails", {
         method: "POST",
         headers: { Authorization: `Token ${process.env.BUTTONDOWN_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, body, status: process.env.BUTTONDOWN_AUTOSEND === "1" ? "about_to_send" : "draft" })
+        body: JSON.stringify({ subject, body: body(sel, extra), status: process.env.BUTTONDOWN_AUTOSEND === "1" ? "about_to_send" : "draft" })
       });
       if (!res.ok) throw new Error(`Buttondown ${res.status}: ${(await res.text()).slice(0, 300)}`);
       return { subject, mode: process.env.BUTTONDOWN_AUTOSEND === "1" ? "sent" : "draft" };
     }
-    module2.exports = { briefDue, markSent, markdown, publish, londonNow };
+    module2.exports = { briefDue, markSent, markdown, body, publish, londonNow };
   }
 });
 
@@ -1302,7 +1390,7 @@ var require_resend = __commonJS({
       const list = process.env.RESEND_SEGMENT_ID ? { segment_id: process.env.RESEND_SEGMENT_ID } : process.env.RESEND_AUDIENCE_ID ? { audience_id: process.env.RESEND_AUDIENCE_ID } : null;
       if (!list) throw new Error("set RESEND_SEGMENT_ID or RESEND_AUDIENCE_ID");
       const { html, text, mins } = nl2.render({ email: "broadcast", unsubUrl: "{{{RESEND_UNSUBSCRIBE_URL}}}" }, sel);
-      const subject = `RECON \xB7 ${sel.reports.length} reports${sel.releases.length ? ` + ${sel.releases.length} official` : ""} \xB7 ${mins}-min read`;
+      const subject = nl2.subjectFor(sel);
       const b = await call("POST", "/broadcasts", { ...list, from: process.env.MAIL_FROM, subject, name: `RECON ${extra.date}`, html, text: text.replace(/Unsubscribe: .*/, "Unsubscribe: {{{RESEND_UNSUBSCRIBE_URL}}}") });
       if (process.env.RESEND_AUTOSEND !== "1") return { mode: "draft", subject, id: b.id };
       await call("POST", `/broadcasts/${b.id}/send`, {});
