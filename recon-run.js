@@ -15,7 +15,7 @@ var require_lean = __commonJS({
         MAX_STORIES: "8",
         MAX_RELEASES: "4",
         RELEASES_PER_SOURCE: "2",
-        MAX_LLM_CALLS_PER_DAY: "60",
+        MAX_LLM_CALLS_PER_DAY: "120",
         RESYNTH_MIN_GROWTH: "2",
         ANALYSIS_MAX_PER_RUN: "6",
         ANTHROPIC_MODEL: "claude-haiku-5-5",
@@ -827,6 +827,20 @@ var require_pipeline = __commonJS({
       const ins = db2.prepare(`INSERT INTO stories (cluster_key,${cols}) VALUES (?,${cols.split(",").map(() => "?").join(",")})`);
       const upd = db2.prepare(`UPDATE stories SET ${cols.split(",").map((c) => c + "=?").join(",")},updated_at=datetime('now') WHERE id=?`);
       const touched = [];
+      const { FINANCE_RE } = require_sources();
+      const fin = (c) => c.articles.filter((a) => FINANCE_RE.test(a.title + " " + (a.snippet || ""))).length;
+      const memo = {
+        get: (k) => {
+          const r = db2.prepare("SELECT value FROM meta WHERE key=?").get("cl:" + k);
+          if (!r) return null;
+          const [o, t] = r.value.split("|");
+          return Date.now() - +t < 864e5 ? o : null;
+        },
+        set: (k, o) => db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES (?,?)").run("cl:" + k, o + "|" + Date.now())
+      };
+      clusters.sort((a, b) => b.articles.length + fin(b) - (a.articles.length + fin(a)));
+      let spent = 0;
+      const PER_RUN = +(process.env.MAX_SYNTH_PER_RUN || 12);
       for (const c of clusters) {
         let existing = null;
         for (const a of c.articles) {
@@ -838,20 +852,37 @@ var require_pipeline = __commonJS({
           outs.push(label + " \u2192 already published");
           continue;
         }
+        if (fin(c) < 2) {
+          outs.push(label + " \u2192 not finance news (skipped before AI)");
+          continue;
+        }
+        const seenO = memo.get(c.key);
+        if (seenO && !existing) {
+          outs.push(label + " \u2192 previously rejected (" + seenO + ")");
+          continue;
+        }
+        if (spent >= PER_RUN) {
+          outs.push(label + " \u2192 queued for the next run (per-run limit)");
+          continue;
+        }
+        spent++;
         try {
           await fillFullText(c.articles);
           const s = await synthesise(c.articles);
           if (!s) {
+            memo.set(c.key, "no result");
             outs.push(label + " \u2192 no result");
             continue;
           }
           if (s.same_event === false) {
+            memo.set(c.key, "different events");
             outs.push(label + " \u2192 sources were different events");
             continue;
           }
           if (c.articles.length < 3 && s.confidence === "HIGH") s.confidence = "MEDIUM";
           if (s.uk_relevance != null && s.uk_relevance < 3) {
             console.log("  - skipped (low UK relevance):", s.headline);
+            memo.set(c.key, "low UK relevance");
             outs.push(label + " \u2192 skipped, low UK relevance");
             continue;
           }
