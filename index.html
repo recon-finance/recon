@@ -32,7 +32,7 @@ a{color:inherit}
 @media(max-width:560px){.bar .hide-s{display:none}.cls{letter-spacing:.14em;font-size:9px}}
 
 /* layout */
-.wrap{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1180px;margin:0 auto}
+.wrap{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1480px;margin:0 auto}
 .rail{padding:36px 28px;border-right:1px solid var(--line);position:sticky;top:78px;align-self:start}
 main{padding:36px 40px 80px;min-width:0}
 @media(max-width:860px){
@@ -65,7 +65,7 @@ main{padding:36px 40px 80px;min-width:0}
 .sec{display:flex;align-items:center;gap:12px;margin:0 0 14px}
 .sec::after{content:"";flex:1;height:1px;background:var(--line)}
 h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
-.lede{color:var(--sub);margin:0 0 28px;max-width:56ch}
+.lede{color:var(--sub);margin:0 0 28px}
 
 /* corner-bracket panels */
 .br{--c:var(--sub);background:
@@ -106,8 +106,8 @@ h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
 .prec{font:600 9.5px var(--mono);letter-spacing:.16em;border:1px solid var(--line2);color:var(--sub);padding:2px 6px}
 .prec.p1{color:var(--ink);border-color:var(--ink)}
 .prec.p2{color:#000;background:var(--ink);border-color:var(--ink)}
-.story h2{font:600 21px/1.3 var(--sans);letter-spacing:-.015em;margin:0 0 10px;max-width:34em}
-.bluf{margin:0;color:var(--sub);max-width:60ch}
+.story h2{font:600 21px/1.3 var(--sans);letter-spacing:-.015em;margin:0 0 10px}
+.bluf{margin:0;color:var(--sub)}
 .bluf b{font:600 11px var(--sans);letter-spacing:.14em;color:var(--ink);margin-right:8px}
 .meta2{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:16px}
 .meta2 > span{display:flex;align-items:center;gap:8px}
@@ -125,10 +125,10 @@ h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
 .det li::before{content:"—";position:absolute;left:0;color:var(--mute)}
 .det .why{color:var(--sub)}
 .dissent{border-left:2px solid var(--ink);padding:2px 0 2px 12px;margin-top:6px;color:var(--ink)}
-.take{margin:14px 0 0;padding-left:12px;border-left:2px solid var(--ink);max-width:60ch;color:var(--ink);font-size:14.5px}
+.take{margin:14px 0 0;padding-left:12px;border-left:2px solid var(--ink);color:var(--ink);font-size:14.5px}
 .take b{display:inline-block;background:var(--ink);color:#000;font:700 9.5px/1 var(--mono);letter-spacing:.14em;padding:3px 6px;margin-right:8px;vertical-align:1px}
 .det{padding:26px 28px}
-.det .prose p{margin:0 0 14px;max-width:66ch;line-height:1.75;color:#cfcfcf;font-size:15px}
+.det .prose p{margin:0 0 14px;line-height:1.75;color:#cfcfcf;font-size:15px}
 .cite{font:600 9.5px var(--mono);color:var(--ink);border:1px solid var(--line2);padding:0 3px;margin-left:2px;vertical-align:super;line-height:1;cursor:help}
 .note{font:11px/1.5 var(--mono);color:var(--mute);border:1px dashed var(--line2);padding:8px 10px;margin:0 0 20px}
 table.nums{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 4px}
@@ -145,21 +145,29 @@ table.nums td.s{font:11px var(--mono);color:var(--mute);width:34px}
 .rxh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--ink);color:#000;font:700 10px var(--mono);letter-spacing:.18em;padding:8px 14px;margin:-1px -1px 16px}
 .rxh span:last-child{font-weight:500;opacity:.7}
 .rx>*:not(.rxh){margin-left:20px;margin-right:20px}
-.thesis{font:600 19px/1.4 var(--sans);letter-spacing:-.012em;color:#fff;margin-bottom:14px;max-width:34em}
+.thesis{font:600 19px/1.4 var(--sans);letter-spacing:-.012em;color:#fff;margin-bottom:14px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .chp{all:unset;cursor:pointer;border:1px solid var(--line2);padding:4px 9px;font:11px var(--mono);color:var(--sub);letter-spacing:.04em}
 button.chp:hover{color:#000;background:var(--ink);border-color:var(--ink)}
 span.chp{cursor:default}
 .rxrow{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:14px;font-size:14px;color:#cfcfcf;line-height:1.6}
 .rxrow .label{padding-top:4px}
-.cs{display:inline-block;font:600 10px var(--mono);letter-spacing:.1em;padding:2px 7px;border:1px solid var(--sub);color:var(--ink)}
-.cs.ok{background:var(--ink);color:#000;border-color:var(--ink)}
-.cs.no{border-style:dashed;color:var(--sub)}
-.trs{display:flex;gap:40px;flex-wrap:wrap;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px}
-.trs .stat small{display:block;font:10.5px var(--mono);color:var(--mute);margin-top:3px}
-table.tr td.v{white-space:normal}
-.trn{font:11px/1.6 var(--mono);color:var(--mute);max-width:72ch;margin:10px 0 0}
 .stale{font:600 9px var(--mono);letter-spacing:.12em;border:1px dashed var(--sub);color:var(--sub);padding:1px 5px;margin-left:6px}
+.poll{padding:24px 26px}
+.pmeta2{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pq{font:600 22px/1.35 var(--sans);letter-spacing:-.015em;margin:12px 0 18px;color:#fff}
+.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbtn{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;border:1px solid var(--line2);padding:16px;font:600 13px var(--sans);letter-spacing:.24em;color:var(--ink);transition:background .15s,color .15s,border-color .15s}
+.pbtn:hover{background:var(--ink);color:#000;border-color:var(--ink)}
+.pbtn:disabled{opacity:.5;cursor:default}
+.pbar{display:grid;grid-template-columns:44px minmax(0,1fr) 62px;gap:14px;align-items:center;margin:12px 0}
+.pbar .trk{height:26px;background:var(--line);position:relative;overflow:hidden}
+.pbar .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink);transition:width .8s cubic-bezier(.2,.7,.2,1)}
+.pbar .fill.dim{background:var(--mute)}
+.pbar b{font:600 20px var(--sans);text-align:right;letter-spacing:-.02em}
+.pbar.mine .label{color:var(--ink)}
+.pbar.mine .label::after{content:" ◂";color:var(--ink)}
+.pmeta{margin-top:14px;font-size:10.5px}
 .disc{font:10.5px/1.5 var(--mono);color:var(--mute);margin-top:16px}
 .det section.top ul{margin-bottom:0}
 @media(max-width:560px){.det{padding:20px 16px}.rx>*:not(.rxh){margin-left:14px;margin-right:14px}.rxrow,.watch li{grid-template-columns:1fr;gap:2px}}
@@ -169,7 +177,7 @@ table.tr td.v{white-space:normal}
 @media(max-width:560px){.story{grid-template-columns:1fr}.idx{margin-bottom:6px}.tog{margin-left:0}.stats{gap:28px}}
 .empty{padding:60px 0;color:var(--mute);border-bottom:1px solid var(--line)}
 .eor{text-align:center;font:10px var(--mono);letter-spacing:.3em;color:var(--mute);padding:28px 0 0}
-footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;line-height:1.6}
+footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;line-height:1.6}
 .cls.bot{margin-top:0}
 
 /* scramble transition */
@@ -190,7 +198,7 @@ footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
 <div class="cls">Unclassified // Open-source intelligence // For information only</div>
 <div class="bar">
  <span class="brand">RECON</span>
- <span class="r"><span class="mono hide-s" id="net"></span><span class="mono link hide-s">LINK SECURE</span><span class="mono" id="dtg"></span><button class="snd" id="snd" aria-pressed="true">AUDIO ON</button></span>
+ <span class="r"><span class="mono hide-s" id="upd"></span><span class="mono hide-s" id="net"></span><span class="mono link hide-s">LINK SECURE</span><span class="mono" id="dtg"></span><button class="snd" id="snd" aria-pressed="true">AUDIO ON</button></span>
 </div>
 <div class="wrap">
  <aside class="rail">
@@ -216,7 +224,7 @@ footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
   <div class="kpis" id="kpis"></div>
   <div class="knote" id="knote"></div>
 
-  <div class="sec"><span class="label">§2 · Intelligence reports</span></div>
+  <div class="sec"><span class="label" id="s2h">§2 · Intelligence reports</span></div>
   <div class="stats">
    <div class="stat"><b id="s1">–</b><span class="label">Reports</span></div>
    <div class="stat"><b id="s2">–</b><span class="label">Outlets</span></div>
@@ -225,8 +233,7 @@ footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
    <div class="stat"><b id="s4">–</b><span class="label">Tube read</span></div>
   </div>
   <div id="fw"><div id="feed" aria-live="polite"></div></div>
-  <div class="sec" style="margin-top:44px"><span class="label">§3 · Track record</span></div>
-  <div id="tr"></div>
+  <div id="pollsec" hidden><div class="sec" style="margin-top:44px"><span class="label">§3 · Daily poll</span></div><div class="poll br" id="poll"></div></div>
   <div class="eor">— END OF REPORT —</div>
  </main>
 </div>
@@ -237,6 +244,7 @@ footer{max-width:1180px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeUrl=u=>/^https?:\/\//i.test(u)?u:'#';
+const STORIES_URL='/api/stories',RATES_URL='/api/rates',POLLQ='/api/poll',VOTE_BASE='/api/poll';   // the static build swaps these for data/*.json and the vote service
 
 /* ---------- SOUND (synthesised with WebAudio: no files) ---------- */
 const SFX=(()=>{
@@ -304,7 +312,7 @@ function renderRates(){
   <div class="kr">
    <div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span>${esc(b.lastMoveDetail)}</span></div>
    <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span> · ${esc(b.nextLabel)}</span></div>
-   <div><span class="label">Market</span><span>${esc(b.market)}</span></div>
+   ${b.market?`<div><span class="label">Market</span><span>${esc(b.market)}</span></div>`:''}
   </div>
   <div class="kfoot"><span>SRC ${esc(b.source.name).toUpperCase()}${b.stale?'<span class="stale">STALE</span>':''}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>
   ${b.marketSource?`<div class="kfoot" style="margin-top:4px"><span>MKT PRICING ${esc(b.marketSource.name).toUpperCase()}</span><a href="${esc(safeUrl(b.marketSource.url))}" target="_blank" rel="noopener noreferrer">VIEW ↗</a></div>`:''}</div>`).join('');
@@ -352,7 +360,7 @@ const swap=async fn=>{ // used for every content change: corrupt -> re-render ->
  $('#feed').removeAttribute('aria-busy')};
 
 /* ---------- reports ---------- */
-let ALL=[],TOPICS=[],topic='ALL',EVENTS={};
+let ALL=[],TOPICS=[],topic='ALL',EVENTS={},GEN='';
 function ago(iso){const m=Math.max(1,Math.round((Date.now()-new Date(iso))/6e4));return m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'}
 const conf=c=>({HIGH:3,MEDIUM:2,LOW:1}[c]||2);
 const LBL={'RATES & BOE':'Rates & BoE','UK ECONOMY':'UK economy','BANKING':'Banking','MARKETS':'Markets & stocks','PROPERTY':'Property & mortgages','FISCAL':'Fiscal & policy','ENERGY & TRADE':'Energy & trade'};
@@ -362,8 +370,6 @@ const prec=n=>n>=6?['FLASH','p2']:n>=4?['PRIORITY','p1']:['ROUTINE',''];
 const para=(t,src)=>`<p>${esc(t).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</p>`;
 const evLabel=id=>{const e=EVENTS[id];if(!e)return id;const d=new Date(e.date);return `${p2(d.getUTCDate())} ${MON[d.getUTCMonth()]} · ${e.label}`};
 const asmWords=a=>a?a.words:0;
-const callChip=c=>c.status==='RESOLVED'?(c.correct?`<span class="cs ok">✓ CORRECT</span> <span class="mono">actual: ${esc(c.actual)}</span>`:`<span class="cs no">✗ INCORRECT</span> <span class="mono">actual: ${esc(c.actual)}</span>`):c.status==='VOID'?'<span class="cs no">VOID · NO DATA</span>':'<span class="cs">PENDING</span>';
-const callRow=c=>`<div class="rxrow"><span class="label">Logged call</span><span><b class="mono" style="color:var(--ink)">${esc(c.bank)} · ${esc(c.expect)}</b> <span class="mono">${esc(evLabel(c.eventId))}</span> ${callChip(c)}</span></div>`;
 function sec(title,html){return html?`<section><h4>${title}</h4>${html}</section>`:''}
 function detail(s){
  const a=s.assessment,an=s.analysis,src=s.sources;let h='';
@@ -384,7 +390,6 @@ function detail(s){
   <div class="thesis">${esc(an.thesis)}</div>
   <div class="prose">${an.body.map(x=>`<p>${esc(x)}</p>`).join('')}</div>
   ${an.links?.length?`<div class="rxrow"><span class="label">Connects to</span><span class="chips">${an.links.map(l=>l.type==='report'?`<button class="chp" data-rpt="${l.ref}">RPT-${String(l.ref).padStart(4,'0')}</button>`:`<span class="chp">${esc(evLabel(l.ref))}</span>`).join('')}</span></div>`:''}
-  ${s.call?callRow(s.call):''}
   ${an.counter?`<div class="rxrow"><span class="label">Counter-case</span><span>${esc(an.counter)}</span></div>`:''}
   <div class="rxrow"><span class="label">Conviction</span><span><span class="sq">${[1,2,3].map(n=>`<i class="${n<=conf(an.conviction)?'f':''}"></i>`).join('')}</span> <span class="mono">${esc(an.conviction)}</span></span></div>
   <div class="disc">Generated by RECON's AI from the report above, other recent reports and the events calendar. It is opinion, not fact, and may be wrong. Not financial advice.</div></div>`:'';
@@ -396,11 +401,13 @@ function renderAo(){
 function render(){
  const list=topic==='ALL'?ALL:topic==='__OFFICIAL__'?ALL.filter(isRel):ALL.filter(s=>s.topic===topic);
  renderAo();
- $('#s1').textContent=ALL.filter(s=>!isRel(s)).length;
- $('#s5').textContent=ALL.filter(isRel).length;
- $('#s2').textContent=new Set(ALL.flatMap(s=>s.sources.map(x=>x.name))).size;
- $('#s3').textContent=ALL.filter(s=>s.confidence==='HIGH').length;
- $('#s4').textContent=ALL.length?tubeMins(ALL)+' min':'–';
+ $('#s2h').textContent='§2 · Intelligence reports'+(topic==='ALL'?'':' · '+(topic==='__OFFICIAL__'?'OFFICIAL RELEASES':(LBL[topic]||topic).toUpperCase()));
+ const rep_=list.filter(x=>!isRel(x));   // every figure below describes what is on screen (the selected sector)
+ $('#s1').textContent=rep_.length;
+ $('#s5').textContent=list.filter(isRel).length;
+ $('#s2').textContent=new Set(list.flatMap(x=>x.sources.map(y=>y.name))).size;
+ $('#s3').textContent=list.filter(x=>x.confidence==='HIGH').length;
+ $('#s4').textContent=list.length?tubeMins(list)+' min':'–';
  $('#feed').innerHTML=list.length?list.map(s=>{const c=conf(s.confidence),[pl,pc]=isRel(s)?['OFFICIAL','p2']:prec(s.sourceCount);return `<article class="story" id="rpt-${s.id}" data-id="${s.id}">
   <div class="idx">RPT-${String(s.id).padStart(4,'0')}</div>
   <div>
@@ -417,18 +424,48 @@ function render(){
   </div></article>`}).join(''):`<div class="empty">No corroborated reporting in this sector. Reports are published once three or more outlets confirm the same event.</div>`;
 }
 
-/* ---------- track record ---------- */
-const pc=x=>x==null?'–':Math.round(x*100)+'%';
-function renderTR(d){
- const el=$('#tr');if(!d){el.innerHTML='';return}
- const m=d.summary;
- el.innerHTML=`<div class="trs">
-  <div class="stat"><b>${m.total}</b><span class="label">Calls logged</span><small>${m.pending} pending</small></div>
-  <div class="stat"><b>${pc(m.hitRate)}</b><span class="label">RECON hit rate</span><small>n=${m.resolved} resolved</small></div>
-  <div class="stat"><b>${pc(m.marketHitRate)}</b><span class="label">Market favourite</span><small>n=${m.marketResolved}, same calls</small></div></div>
-  ${d.calls.length?`<table class="nums tr"><tr><th>Event</th><th>RECON call</th><th>Market favourite</th><th>Result</th></tr>${d.calls.slice(0,12).map(c=>`<tr><td>${esc(evLabel(c.eventId))}<small>${esc(c.headline||'')}</small></td><td class="v">${esc(c.bank)} · ${esc(c.expect)}${c.conviction?`<small>${esc(c.conviction)} conviction</small>`:''}</td><td class="v">${c.marketExpect?esc(c.marketExpect)+`<small>${Math.round(c.marketPct)}% priced</small>`:'–'}</td><td>${callChip(c)}</td></tr>`).join('')}</table>`:'<div class="empty" style="padding:24px 0">No calls logged yet. Calls appear here before the event they concern.</div>'}
-  <p class="trn">${m.resolved===0?'No calls resolved yet. ':m.resolved<20?`Small sample (n=${m.resolved}): treat as indicative. `:''}Calls are logged before the event, cannot be edited afterwards, and are scored automatically against the published policy rate. Only BoE, Fed and ECB rate decisions are scored for now. “Market favourite” is the outcome priced as most likely when the call was made: if RECON only matches it, the analysis adds little.</p>`;
+/* ---------- daily poll ---------- */
+let POLL=null;
+const pkey=id=>'recon-poll-'+id;
+const myVote=id=>{try{return localStorage.getItem(pkey(id))}catch(e){return null}};
+const setVote=(id,v)=>{try{localStorage.setItem(pkey(id),v)}catch(e){}};
+const pct=(a,b)=>{const t=a+b;return t?Math.round(a/t*100):0};
+function pollBars(r,mine){
+ const t=r.yes+r.no,y=pct(r.yes,r.no),n=t?100-y:0;
+ return `<div class="pbars"><div class="pbar${mine==='yes'?' mine':''}"><span class="label">Yes</span><div class="trk"><div class="fill" data-w="${y}"></div></div><b>${y}%</b></div><div class="pbar${mine==='no'?' mine':''}"><span class="label">No</span><div class="trk"><div class="fill dim" data-w="${n}"></div></div><b>${n}%</b></div></div><div class="pmeta mono">${t} VOTE${t===1?'':'S'}${mine?' · YOU VOTED '+mine.toUpperCase():''} · NEW QUESTION EVERY MORNING</div>`}
+function drawPoll(results){
+ const el=$('#poll'),p=POLL,mine=myVote(p.id);
+ const link=p.storyId?`<button class="chp" data-rpt="${p.storyId}">RPT-${String(p.storyId).padStart(4,'0')}</button>`:'';
+ el.innerHTML=`<div class="pmeta2"><span class="label">Today's question · ${esc(p.id)}</span>${link}</div><h3 class="pq">${esc(p.question)}</h3>`+
+  (mine&&results?pollBars(results,mine):mine?'<div class="pmeta mono">LOADING RESULTS…</div>':`<div class="pbtns"><button class="pbtn" data-v="yes">YES</button><button class="pbtn" data-v="no">NO</button></div><div class="pmeta mono">VOTE TO SEE HOW OTHER READERS ANSWERED</div>`);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>el.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%')));
 }
+async function getResults(){try{const r=await fetch(VOTE_BASE+'/results?id='+encodeURIComponent(POLL.id),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();return{yes:+j.yes||0,no:+j.no||0}}catch(e){return null}}
+async function loadPoll(){
+ if(!VOTE_BASE)return;   // no vote backend configured: the poll section stays hidden
+ try{const d=await (await fetch(POLLQ,{cache:'no-cache'})).json(),p=d.poll;
+  if(!p||!p.question){$('#pollsec').hidden=true;return}
+  const changed=!POLL||POLL.id!==p.id;POLL=p;$('#pollsec').hidden=false;
+  if(changed||!$('#poll').innerHTML)drawPoll(myVote(p.id)?await getResults():null);
+  else if(myVote(p.id)){const r=await getResults();if(r)drawPoll(r)}
+ }catch(e){}}
+document.addEventListener('click',async e=>{const b=e.target.closest('.pbtn');if(!b||!POLL)return;SFX.click();const v=b.dataset.v;b.disabled=true;
+ try{const r=await fetch(VOTE_BASE+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:POLL.id,choice:v})});
+  if(!r.ok&&r.status!==409)throw 0;
+  setVote(POLL.id,v);const j=r.ok?await r.json():await getResults();drawPoll({yes:+(j&&j.yes)||0,no:+(j&&j.no)||0});SFX.ok()}
+ catch(err){SFX.err();const m=document.querySelector('#poll .pmeta');if(m)m.textContent='COULD NOT RECORD YOUR VOTE. TRY AGAIN IN A MOMENT.';b.disabled=false}});
+setInterval(()=>{if(POLL&&myVote(POLL.id)&&!document.hidden)getResults().then(r=>r&&drawPoll(r))},30000);
+loadPoll();
+/* ---------- freshness: "updated X ago" + quiet refresh while the page is open ---------- */
+function paintUpd(){const el=$('#upd');if(!el||!GEN){return}const m=Math.max(0,Math.round((Date.now()-new Date(GEN))/6e4));el.textContent='UPDATED '+(m<1?'JUST NOW':m<60?m+'M AGO':m<1440?Math.round(m/60)+'H AGO':Math.round(m/1440)+'D AGO')}
+setInterval(paintUpd,30000);
+async function refreshData(){
+ try{const d=await (await fetch(STORIES_URL,{cache:'no-cache'})).json();
+  if(d.generatedAt&&d.generatedAt!==GEN){const open=[...document.querySelectorAll('.story.open')].map(x=>x.id);GEN=d.generatedAt;ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};render();open.forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('open')});paintUpd()}
+  const r=await (await fetch(RATES_URL,{cache:'no-cache'})).json();RATES=r;renderRates();
+  loadPoll()}catch(e){}}
+setInterval(()=>{if(!document.hidden)refreshData()},5*60*1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData()});
 
 /* ---------- deep links: #rpt-12 opens a report ---------- */
 function openReport(id){
@@ -462,9 +499,8 @@ $('#f').addEventListener('submit',async e=>{
 });
 function subscribedBanner(){if(location.hash==='#subscribed'){$('#msg').className='msg';$('#msg').textContent="You're subscribed. Your first brief arrives at 07:00 UK time.";history.replaceState(null,'',location.pathname+location.search)}}
 subscribedBanner();addEventListener('hashchange',subscribedBanner);
-fetch('/api/stories').then(r=>r.json()).then(async d=>{ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};render();openHash();await bootP;scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0})}).catch(()=>{$('#feed').innerHTML='<div class="empty">Feed offline.</div>'});
-fetch('/api/trackrecord').then(r=>r.json()).then(renderTR).catch(()=>renderTR(null));
-fetch('/api/rates').then(r=>r.json()).then(async d=>{RATES=d;renderRates();await bootP;scrambleIn($('#kpis'),{dur:800,step:0})}).catch(()=>{$('#kpis').innerHTML='<div class="empty" style="grid-column:1/-1">Rate data unavailable.</div>'});
+fetch(STORIES_URL).then(r=>r.json()).then(async d=>{GEN=d.generatedAt||'';ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};paintUpd();render();openHash();await bootP;scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0})}).catch(()=>{$('#feed').innerHTML='<div class="empty">Feed offline.</div>'});
+fetch(RATES_URL).then(r=>r.json()).then(async d=>{RATES=d;renderRates();await bootP;scrambleIn($('#kpis'),{dur:800,step:0})}).catch(()=>{$('#kpis').innerHTML='<div class="empty" style="grid-column:1/-1">Rate data unavailable.</div>'});
 </script>
 </body>
 </html>

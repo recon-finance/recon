@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS stories (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS llm_usage (day TEXT PRIMARY KEY, calls INTEGER DEFAULT 0, input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS polls (id TEXT PRIMARY KEY, question TEXT NOT NULL, story_id INTEGER, source TEXT, created_at TEXT DEFAULT (datetime('now')));   -- id = London date
+CREATE TABLE IF NOT EXISTS poll_votes (poll_id TEXT NOT NULL, voter TEXT NOT NULL, choice TEXT NOT NULL, at TEXT DEFAULT (datetime('now')), PRIMARY KEY (poll_id, voter));
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS release_seen (url TEXT PRIMARY KEY, outcome TEXT, at TEXT DEFAULT (datetime('now')));
 CREATE TABLE IF NOT EXISTS source_health (
@@ -166,6 +168,7 @@ var require_ingest = __commonJS({
     var SOURCES = require_sources();
     var parser = new Parser({ timeout: 15e3, headers: { "User-Agent": "ReconBot/1.0 (+news aggregation; links back to sources)" } });
     var strip = (s) => (s || "").replace(/<[^>]*>/g, " ").replace(/&[a-z#0-9]+;/gi, " ").replace(/\s+/g, " ").trim();
+    var HOSTS = { "Financial Times": "ft.com", Bloomberg: "bloomberg.com", "BBC News": "bbc.co.uk", "The Guardian": "theguardian.com", "Sky News": "news.sky.com", "The Telegraph": "telegraph.co.uk", "The Independent": "independent.co.uk", "This is Money": "thisismoney.co.uk", "The Economist": "economist.com", CNBC: "cnbc.com", MarketWatch: "marketwatch.com", WSJ: "wsj.com", "City AM": "cityam.com", IFS: "ifs.org.uk", Reuters: "reuters.com" };
     async function discover(site) {
       try {
         const r = await fetch(site, { headers: { "User-Agent": "ReconBot/1.0" }, redirect: "follow" });
@@ -198,7 +201,7 @@ var require_ingest = __commonJS({
       const health = db2.prepare(`INSERT INTO source_health (url,name,tier,required,last_ok,last_error,items,note,checked_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'))
     ON CONFLICT(url) DO UPDATE SET name=excluded.name,tier=excluded.tier,required=excluded.required,last_ok=COALESCE(excluded.last_ok,last_ok),last_error=excluded.last_error,items=excluded.items,note=COALESCE(excluded.note,note),checked_at=excluded.checked_at`);
       let added = 0;
-      const failed = [];
+      const failed = [], stats = [];
       await Promise.all(SOURCES.filter((s) => s.enabled !== false).map(async (src) => {
         let note = null;
         try {
@@ -207,15 +210,25 @@ var require_ingest = __commonJS({
             feed = await parseURL(src.url);
           } catch (e) {
             const alt = src.site ? await discoverFn(src.site) : null;
-            if (!alt || alt === src.url) throw e;
-            feed = await parseURL(alt);
-            note = `feed URL failed; autodiscovered ${alt} (update publishers.json)`;
+            try {
+              if (!alt || alt === src.url) throw e;
+              feed = await parseURL(alt);
+              note = `feed URL failed; autodiscovered ${alt} (update publishers.json)`;
+            } catch (e2) {
+              if (src.tier === "full" || src.viaGoogleNews) throw e;
+              const host = HOSTS[src.name] || new URL(src.site || src.url).hostname.replace(/^www\./, "");
+              feed = await parseURL(`https://news.google.com/rss/search?q=site:${host}+when:2d&hl=en-GB&gl=GB&ceid=GB:en`);
+              src = { ...src, viaGoogleNews: true, suffix: src.suffix || src.name.replace(/^The /, "(?:The )?"), filter: true };
+              note = `direct feed blocked (${String(e.message).slice(0, 60)}); using Google News headlines`;
+            }
           }
           const items = itemsFrom(src, feed);
           for (const a of items) added += insert.run(a.url, src.name, a.title, a.snippet, a.at, src.tier === "full" ? "full" : "snippet").changes;
           health.run(src.url, src.name, src.tier, src.required ? 1 : 0, (/* @__PURE__ */ new Date()).toISOString(), null, items.length, note);
+          stats.push({ name: src.name, url: src.url, ok: true, items: items.length, note });
         } catch (e) {
           failed.push(`${src.name}: ${e.message}`);
+          stats.push({ name: src.name, url: src.url, ok: false, items: 0, error: String(e.message).slice(0, 120) });
           health.run(src.url, src.name, src.tier, src.required ? 1 : 0, null, String(e.message).slice(0, 200), 0, note);
         }
       }));
@@ -226,7 +239,7 @@ var require_ingest = __commonJS({
       console.log(`[ingest] +${added} articles, ${failed.length} feeds failed`);
       failed.forEach((f) => console.log("  ! " + f));
       quiet.forEach((q) => console.log(`  !! REQUIRED source silent for 48h+: ${q.name} (${q.url})`));
-      return { added, failed, quiet };
+      return { added, failed, quiet, stats };
     }
     module2.exports = ingest;
     module2.exports.itemsFrom = itemsFrom;
@@ -273,13 +286,13 @@ var require_cluster = __commonJS({
       });
       return s;
     };
-    function cluster(arts) {
+    function cluster(arts, th = THRESHOLD) {
       const vecs = vectorise(arts);
       const parent = arts.map((_, i) => i);
       const find = (i) => parent[i] === i ? i : parent[i] = find(parent[i]);
       for (let i = 0; i < arts.length; i++)
         for (let j = i + 1; j < arts.length; j++)
-          if (arts[i].source !== arts[j].source && cos(vecs[i], vecs[j]) >= THRESHOLD) parent[find(i)] = find(j);
+          if (arts[i].source !== arts[j].source && cos(vecs[i], vecs[j]) >= th) parent[find(i)] = find(j);
       const groups = /* @__PURE__ */ new Map();
       arts.forEach((a, i) => {
         const r = find(i);
@@ -293,7 +306,16 @@ var require_cluster = __commonJS({
         return [...by.values()];
       }).filter((g) => g.length >= MIN_SOURCES).map((g) => ({ articles: g, key: crypto.createHash("sha1").update(g.map((a) => a.url).sort()[0]).digest("hex").slice(0, 16) })).sort((a, b) => b.articles.length - a.articles.length);
     }
-    module2.exports = { cluster, MIN_SOURCES };
+    function clusterAdaptive(arts, target = +(process.env.MIN_STORIES_TARGET || 4)) {
+      let best = { clusters: [], th: THRESHOLD };
+      for (const th of [THRESHOLD, 0.23, 0.19]) {
+        const c = cluster(arts, th);
+        if (c.length > best.clusters.length || th === THRESHOLD) best = { clusters: c, th };
+        if (c.length >= target) break;
+      }
+      return best;
+    }
+    module2.exports = { cluster, clusterAdaptive, MIN_SOURCES };
   }
 });
 
@@ -497,9 +519,6 @@ var require_verify = __commonJS({
         counter: cleanText([String(a.counter || "")], corpus, stats)[0] || "",
         conviction: ["LOW", "MEDIUM", "HIGH"].includes(a.conviction) ? a.conviction : "MEDIUM"
       };
-      const c = a.call;
-      if (c && ["BOE", "FED", "ECB"].includes(c.bank) && validEvents.has(String(c.event)) && String(c.event).startsWith(c.bank.toLowerCase() + "-") && ["HIKE", "HOLD", "CUT"].includes(c.expect))
-        out.call = { bank: c.bank, event: String(c.event), expect: c.expect };
       return { analysis: out, stats };
     }
     module2.exports = { cleanAssessment, cleanAnalysis, allPresent, numbers };
@@ -584,88 +603,6 @@ TEXT: ${textOf(a) || "(headline only)"}`).join("\n\n");
   }
 });
 
-// lib/trackrecord.js
-var require_trackrecord = __commonJS({
-  "lib/trackrecord.js"(exports2, module2) {
-    var fs = require("fs");
-    var path = require("path");
-    var db2 = require_db();
-    var RATES = require_paths().RATES;
-    var CAL = require_files().find("calendar.json");
-    function record(storyId, call, conviction, now = /* @__PURE__ */ new Date()) {
-      try {
-        const bank = JSON.parse(fs.readFileSync(RATES, "utf8")).banks.find((b) => b.code === call.bank);
-        const ev = JSON.parse(fs.readFileSync(CAL, "utf8")).events.find((e) => e.id === call.event);
-        if (!bank || !ev || new Date(ev.date) <= now || bank.rateNum == null) return false;
-        const mp = bank.marketProb || null;
-        const fav = !mp ? null : mp.dir !== "HOLD" && mp.pct >= 50 ? { e: mp.dir, p: mp.pct } : { e: "HOLD", p: mp.dir === "HOLD" ? mp.pct : 100 - mp.pct };
-        return db2.prepare(`INSERT OR IGNORE INTO calls (story_id,bank,event_id,event_at,expect,conviction,baseline_rate,mkt_expect,mkt_pct) VALUES (?,?,?,?,?,?,?,?,?)`).run(storyId, call.bank, call.event, ev.date, call.expect, conviction || null, bank.rateNum, fav && fav.e, fav && fav.p).changes > 0;
-      } catch {
-        return false;
-      }
-    }
-    var outcome = (base, fin) => fin > base + 1e-9 ? "HIKE" : fin < base - 1e-9 ? "CUT" : "HOLD";
-    function resolve(now = /* @__PURE__ */ new Date()) {
-      const due = db2.prepare(`SELECT * FROM calls WHERE status='PENDING' AND julianday(event_at) < julianday(?) - 1.0/24`).all(now.toISOString());
-      let n = 0;
-      for (const c of due) {
-        const snap = db2.prepare(`SELECT rate, at FROM rate_snapshots WHERE bank=? AND julianday(at) >= julianday(?) + 1.0/24 ORDER BY at ASC LIMIT 1`).get(c.bank, c.event_at);
-        if (snap) {
-          const actual = outcome(c.baseline_rate, snap.rate);
-          db2.prepare(`UPDATE calls SET status='RESOLVED', resolved_at=datetime('now'), actual=?, final_rate=?, correct=? WHERE id=?`).run(actual, snap.rate, actual === c.expect ? 1 : 0, c.id);
-          n++;
-        } else if (new Date(now) - new Date(c.event_at) > 72 * 36e5) {
-          db2.prepare(`UPDATE calls SET status='VOID' WHERE id=?`).run(c.id);
-        }
-      }
-      return n;
-    }
-    function manualResolve(bank, eventId, finalRate) {
-      const rows = db2.prepare(`SELECT * FROM calls WHERE bank=? AND event_id=? AND status IN ('PENDING','VOID')`).all(bank, eventId);
-      for (const c of rows) {
-        const a = outcome(c.baseline_rate, +finalRate);
-        db2.prepare(`UPDATE calls SET status='RESOLVED', resolved_at=datetime('now'), actual=?, final_rate=?, correct=? WHERE id=?`).run(a, +finalRate, a === c.expect ? 1 : 0, c.id);
-      }
-      return rows.length;
-    }
-    function stats() {
-      const calls = db2.prepare(`SELECT c.*, s.headline FROM calls c LEFT JOIN stories s ON s.id=c.story_id ORDER BY c.event_at DESC, c.id DESC LIMIT 100`).all();
-      const res = calls.filter((c) => c.status === "RESOLVED"), rc = res.filter((c) => c.correct === 1).length;
-      const mk = res.filter((c) => c.mkt_expect), mc = mk.filter((c) => c.mkt_expect === c.actual).length;
-      return {
-        summary: {
-          total: calls.length,
-          pending: calls.filter((c) => c.status === "PENDING").length,
-          resolved: res.length,
-          correct: rc,
-          hitRate: res.length ? rc / res.length : null,
-          marketResolved: mk.length,
-          marketHitRate: mk.length ? mc / mk.length : null
-        },
-        calls: calls.map((c) => ({
-          id: c.id,
-          storyId: c.story_id,
-          headline: c.headline,
-          bank: c.bank,
-          eventId: c.event_id,
-          eventAt: c.event_at,
-          expect: c.expect,
-          conviction: c.conviction,
-          baseline: c.baseline_rate,
-          marketExpect: c.mkt_expect,
-          marketPct: c.mkt_pct,
-          madeAt: c.made_at.replace(" ", "T") + "Z",
-          status: c.status,
-          actual: c.actual,
-          finalRate: c.final_rate,
-          correct: c.correct === null ? null : !!c.correct
-        }))
-      };
-    }
-    module2.exports = { record, resolve, manualResolve, stats, outcome };
-  }
-});
-
 // lib/analyse.js
 var require_analyse = __commonJS({
   "lib/analyse.js"(exports2, module2) {
@@ -674,7 +611,6 @@ var require_analyse = __commonJS({
     var db2 = require_db();
     var llm = require_llm();
     var { cleanAnalysis } = require_verify();
-    var trackrecord2 = require_trackrecord();
     var SYSTEM = `You write the "RECON Analysis" for RECON, a UK economics, banking and markets briefing for finance professionals. It is the desk's own opinion, in the style of a sharp insider's take: direct, specific, a little wry, never waffly.
 
 You are given (1) one REPORT, (2) other recent RECON REPORTS (with ids), (3) the UPCOMING EVENTS calendar (with ids), and (4) current policy RATES.
@@ -685,10 +621,9 @@ Rules:
 - It is analysis and opinion, not fact: frame it as the desk's view. Give a counter-case (what would make this view wrong).
 - No investment advice: no buy/sell/hold recommendations, no price targets.
 - conviction: LOW | MEDIUM | HIGH, reflecting how strongly the supplied evidence supports the view.
-- call (optional): if the report concerns an upcoming central-bank rate decision in the UPCOMING EVENTS list and you hold a clear view of the outcome, add "call":{"bank":"BOE|FED|ECB","event":"<event id>","expect":"HIKE|HOLD|CUT"}. Your call is logged publicly BEFORE the event and scored against the result, and compared with market pricing, so state your genuine view (it may differ from the market's) and omit the call if you have no clear view. Only rate decisions are scorable.
 - links: list only ids you actually used: {"type":"report","ref":<report id>} or {"type":"event","ref":"<event id>"}.
 
-Return ONLY JSON: {"thesis":"...","body":["para","para"],"links":[{"type":"event","ref":"..."}],"counter":"one or two sentences","conviction":"MEDIUM","call":{"bank":"BOE","event":"boe-2026-11-05","expect":"HIKE"}}`;
+Return ONLY JSON: {"thesis":"...","body":["para","para"],"links":[{"type":"event","ref":"..."}],"counter":"one or two sentences","conviction":"MEDIUM"}`;
     function loadJSON(f, d) {
       try {
         return JSON.parse(fs.readFileSync(f === "rates.json" ? require_paths().RATES : require_files().find(f), "utf8"));
@@ -737,7 +672,6 @@ ${ctxRates}`;
         return null;
       }
       db2.prepare("UPDATE stories SET analysis=? WHERE id=?").run(JSON.stringify(analysis), s.id);
-      if (analysis.call && trackrecord2.record(s.id, analysis.call, analysis.conviction)) console.log(`  + call logged: ${analysis.call.bank} ${analysis.call.event} -> ${analysis.call.expect}`);
       if (stats.droppedSentences) console.log(`  - analysis ${s.id}: removed ${stats.droppedSentences} unverifiable sentence(s)`);
       return analysis;
     }
@@ -837,19 +771,35 @@ var require_pipeline = __commonJS({
   "lib/pipeline.js"(exports2, module2) {
     var db2 = require_db();
     var ingest = require_ingest();
-    var { cluster } = require_cluster();
+    var { clusterAdaptive } = require_cluster();
     var { fillFullText } = require_fulltext();
     var synthesise = require_synthesise();
     var analyse = require_analyse();
     var { runReleases } = require_releases();
     var WINDOW_H = +(process.env.WINDOW_HOURS || 36);
     var MIN_WORDS = +(process.env.MIN_ASSESSMENT_WORDS || 150);
+    var lonDow = () => ({ Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 })[new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(/* @__PURE__ */ new Date())];
     async function run({ skipIngest = false } = {}) {
-      if (!skipIngest) await ingest();
-      const since = new Date(Date.now() - WINDOW_H * 36e5).toISOString();
-      const arts = db2.prepare(`SELECT * FROM articles WHERE published_at >= ? ORDER BY published_at DESC`).all(since);
-      const clusters = cluster(arts).slice(0, +(process.env.MAX_STORIES || 25));
-      console.log(`[pipeline] ${arts.length} articles -> ${clusters.length} corroborated clusters`);
+      const ing = skipIngest ? { stats: [] } : await ingest();
+      const wins = [.../* @__PURE__ */ new Set([[0, 1].includes(lonDow()) ? Math.max(WINDOW_H, 72) : WINDOW_H, 72])];
+      let arts = [], clusters = [], used = null;
+      for (const h of wins) {
+        const since = new Date(Date.now() - h * 36e5).toISOString();
+        arts = db2.prepare(`SELECT * FROM articles WHERE published_at >= ? ORDER BY published_at DESC`).all(since);
+        used = clusterAdaptive(arts);
+        clusters = used.clusters.slice(0, +(process.env.MAX_STORIES || 25));
+        used.hours = h;
+        if (clusters.length >= +(process.env.MIN_STORIES_TARGET || 4)) break;
+      }
+      console.log(`[pipeline] ${arts.length} articles (last ${used.hours}h) -> ${clusters.length} corroborated clusters (similarity ${used.th})`);
+      const bySrc = {};
+      arts.forEach((a) => {
+        bySrc[a.source] = (bySrc[a.source] || 0) + 1;
+      });
+      try {
+        db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('status', ?)").run(JSON.stringify({ at: (/* @__PURE__ */ new Date()).toISOString(), windowHours: used.hours, similarity: used.th, articles: arts.length, clusters: clusters.length, clusterSizes: clusters.map((c) => c.articles.length), articlesBySource: bySrc, feeds: ing.stats || [] }));
+      } catch {
+      }
       const findExisting = db2.prepare(`SELECT id, source_count FROM stories WHERE sources LIKE ?`);
       const cols = "topic,headline,summary,key_points,why_it_matters,disagreements,confidence,sources,source_count,assessment,read_mins";
       const ins = db2.prepare(`INSERT INTO stories (cluster_key,${cols}) VALUES (?,${cols.split(",").map(() => "?").join(",")})`);
@@ -1025,15 +975,18 @@ var require_rateprobability = __commonJS({
         }
         notes.push(`rate change detected ${bank.rate} -> ${p.rate}`);
       }
-      bank.rate = p.rate;
-      bank.rateNum = p.rateNum;
-      bank.next = p.nextAt;
-      bank.nextLabel = label(p.nextAt);
+      const official2 = bank.officialAt && now - new Date(bank.officialAt) < 36 * 36e5;
+      if (!official2) {
+        bank.rate = p.rate;
+        bank.rateNum = p.rateNum;
+        bank.next = p.nextAt;
+        bank.nextLabel = label(p.nextAt);
+      }
       bank.market = fmtMarket(p);
       bank.marketProb = { dir: p.dir, pct: p.pct, bp: p.bp, twelveBp: p.twelveBp };
       bank.marketSource = { name: "RateProbability", url: `${BASE}/${PAGES[bank.code]}` };
       bank.updatedAt = now.toISOString();
-      bank.stale = false;
+      if (!official2) bank.stale = false;
       return notes;
     }
     async function refresh({ fetchHTML = getHTML } = {}) {
@@ -1050,7 +1003,10 @@ var require_rateprobability = __commonJS({
           db2.prepare("INSERT INTO rate_snapshots (bank, rate, prob_dir, prob_pct, prob_bp, next_at) VALUES (?,?,?,?,?,?)").run(bank.code, p.rateNum, p.dir, p.pct, p.bp, p.nextAt);
           results[bank.code] = { ok: true, rate: p.rate, pct: p.pct, notes };
         } catch (e) {
-          bank.stale = true;
+          delete bank.market;
+          delete bank.marketProb;
+          delete bank.marketSource;
+          if (!bank.officialAt) bank.stale = true;
           results[bank.code] = { ok: false, error: e.message.slice(0, 160) };
         }
         await new Promise((r) => setTimeout(r, 1500));
@@ -1204,27 +1160,16 @@ ${html}`);
       const releases = extra ? rows.filter((r) => r.kind === "RELEASE").slice(0, extra) : [];
       return { reports: picked, releases, all: [...picked, ...releases] };
     }
-    var callLine = (s) => {
-      try {
-        const c = db2.prepare("SELECT bank,expect,event_id,status,actual,correct FROM calls WHERE story_id=? ORDER BY id LIMIT 1").get(s.id);
-        if (!c) return "";
-        const m = /(\d{4})-(\d{2})-(\d{2})$/.exec(c.event_id), ev = m ? `${+m[3]} ${MON[+m[2] - 1]}` : c.event_id;
-        return `LOGGED CALL &middot; ${c.bank} ${c.expect} &middot; ${ev} &middot; ${c.status === "RESOLVED" ? c.correct ? "CORRECT" : "INCORRECT" : "PENDING"}`;
-      } catch {
-        return "";
-      }
-    };
     var link = (id) => process.env.SITE_URL || process.env.BASE_URL ? `${(process.env.SITE_URL || process.env.BASE_URL).replace(/\/$/, "")}/#rpt-${id}` : "";
     var precOf = (s) => s.kind === "RELEASE" ? ["OFFICIAL", "solid"] : s.source_count >= 6 ? ["FLASH", "solid"] : s.source_count >= 4 ? ["PRIORITY", "ink"] : ["ROUTINE", "dim"];
     function storyHTML(s) {
-      const pts = JSON.parse(s.key_points), srcs = JSON.parse(s.sources), an = s.analysis ? JSON.parse(s.analysis) : null, l = link(s.id), call = callLine(s), [pl, pk] = precOf(s);
+      const pts = JSON.parse(s.key_points), srcs = JSON.parse(s.sources), an = s.analysis ? JSON.parse(s.analysis) : null, l = link(s.id), [pl, pk] = precOf(s);
       const metaRight = s.kind === "RELEASE" ? `${label("Source", "margin-right:8px")}${mono(`${esc((srcs[0] || {}).name || "")} &middot; PRIMARY DOCUMENT`, "color:" + T.sub)}` : `${label("Sources")}&nbsp;${mono(String(s.source_count), "color:" + T.sub)} &nbsp;&nbsp; ${label("Confidence")}&nbsp;${squares(s.confidence)}&nbsp;${mono(esc(s.confidence), "color:" + T.sub)}`;
       return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line};table-layout:fixed"><tr><td style="padding:26px 0 24px;word-wrap:break-word;overflow-wrap:break-word">
 <div style="margin-bottom:12px">${mono(`RPT-${String(s.id).padStart(4, "0")}`)}&nbsp;&nbsp;${tag(pl, pk)}&nbsp;&nbsp;${label(esc(s.topic))}&nbsp;&nbsp;${mono(ago(s.updated_at.replace(" ", "T") + "Z"))}</div>
 <div style="font-family:${SANS};font-weight:600;font-size:21px;line-height:1.3;letter-spacing:-.015em;color:#ffffff;margin:0 0 10px">${esc(s.headline)}</div>
 <div style="font-family:${SANS};font-size:15px;line-height:1.6;color:${T.sub}"><b style="font-size:11px;letter-spacing:.14em;color:${T.ink}">BLUF</b>&nbsp;&nbsp;${esc(s.summary)}</div>
 ${an ? `<div style="margin-top:14px;padding-left:12px;border-left:2px solid ${T.ink};font-family:${SANS};font-size:14.5px;line-height:1.55;color:${T.ink}"><span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.14em;background:${T.ink};color:#000000;padding:3px 6px">RECON TAKE</span>&nbsp;&nbsp;${esc(an.thesis)}</div>` : ""}
-${call ? `<div style="margin-top:8px;font-family:${MONO};font-size:10.5px;letter-spacing:.06em;color:${T.mute}">${call}</div>` : ""}
 <div style="margin-top:14px">${metaRight}</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:16px;background:${T.panel};border:1px solid ${T.line}"><tr><td style="padding:16px 18px">
 <div>${label("Key findings")}</div>${pts.map((x) => `<div style="font-family:${SANS};font-size:14px;line-height:1.5;color:${T.sub};padding:5px 0 0 16px;text-indent:-16px"><span style="color:${T.mute}">&mdash;</span>&nbsp;${esc(x)}</div>`).join("")}
@@ -1418,9 +1363,7 @@ var require_api = __commonJS({
         });
       } catch {
       }
-      const callOf = db2.prepare("SELECT bank,event_id,expect,status,actual,correct FROM calls WHERE story_id=? ORDER BY id LIMIT 1");
       return { topics: TOPICS, events, generatedAt: (/* @__PURE__ */ new Date()).toISOString(), stories: rows.map((r) => {
-        const c = callOf.get(r.id);
         return {
           id: r.id,
           topic: r.topic,
@@ -1436,13 +1379,258 @@ var require_api = __commonJS({
           kind: r.kind || "REPORT",
           assessment: r.assessment ? JSON.parse(r.assessment) : null,
           analysis: r.analysis ? JSON.parse(r.analysis) : null,
-          readMins: r.read_mins || null,
-          call: c ? { bank: c.bank, eventId: c.event_id, expect: c.expect, status: c.status, actual: c.actual, correct: c.correct === null ? null : !!c.correct } : null
+          readMins: r.read_mins || null
         };
       }) };
     }
     var ratesPayload2 = () => JSON.parse(fs.readFileSync(require_paths().RATES, "utf8"));
     module2.exports = { storiesPayload, ratesPayload: ratesPayload2 };
+  }
+});
+
+// lib/poll.js
+var require_poll = __commonJS({
+  "lib/poll.js"(exports2, module2) {
+    var crypto = require("crypto");
+    var db2 = require_db();
+    var llm = require_llm();
+    var nl2 = require_newsletter();
+    var { allPresent } = require_verify();
+    var { londonNow } = require_buttondown();
+    var SYSTEM = `You write the daily reader poll for RECON, a UK economics, banking and markets briefing for finance professionals.
+From the stories provided, write ONE neutral yes/no question readers can answer with an opinion or expectation (not a fact lookup).
+Rules: at most 110 characters; ends with a question mark; neutral wording (never leading or loaded); about exactly ONE of the stories; plain language; no personal data; do not state any number, date or name that is not in the story text; no investment advice.
+Return ONLY JSON: {"question":"...","story_id":<id from the list>}`;
+    var bad = (q, ctx, ids, j) => !q || q.length > 140 || !/\?$/.test(q) || !ids.includes(+j.story_id) || !allPresent(q, ctx);
+    async function ensureDailyPoll(now = /* @__PURE__ */ new Date()) {
+      const l = londonNow(now);
+      if (l.hour < 6) return null;
+      if (db2.prepare("SELECT 1 FROM polls WHERE id=?").get(l.day)) return null;
+      const sel = nl2.storiesFor([]);
+      if (!sel.all.length) return null;
+      const ctx = sel.all.map((s) => `[${s.id}] ${s.headline}. ${s.summary}`).join("\n"), ids = sel.all.map((s) => s.id);
+      const prev = db2.prepare("SELECT question FROM polls ORDER BY id DESC LIMIT 1").get();
+      let q = null, sid = null, source = "ai";
+      if (process.env.DEMO !== "1" && llm.configured()) {
+        try {
+          const j = await llm.json(SYSTEM, ctx, { max: 300 });
+          const cand = String(j && j.question || "").trim();
+          if (!bad(cand, ctx, ids, j) && (!prev || prev.question !== cand)) {
+            q = cand;
+            sid = +j.story_id;
+          } else console.log("[poll] AI question rejected:", cand.slice(0, 90));
+        } catch (e) {
+          console.log("[poll] AI failed:", e.message);
+        }
+      }
+      if (!q) {
+        const top = sel.all.map((s) => ({ s, an: s.analysis ? JSON.parse(s.analysis) : null })).find((x) => x.an && x.an.thesis);
+        if (!top) return null;
+        let t = top.an.thesis.split(/(?<=[.!?])\s/)[0].replace(/[.!?]+$/, "");
+        if (t.length > 90) t = t.slice(0, 88).replace(/\s\S*$/, "") + "\u2026";
+        q = `Do you agree with RECON's take: "${t}"?`;
+        sid = top.s.id;
+        source = "fallback";
+      }
+      db2.prepare("INSERT OR IGNORE INTO polls (id, question, story_id, source) VALUES (?,?,?,?)").run(l.day, q, sid, source);
+      console.log(`[poll] ${l.day} (${source}): ${q}`);
+      return { id: l.day, question: q, storyId: sid };
+    }
+    function pollPayload(now = /* @__PURE__ */ new Date()) {
+      const l = londonNow(now), y = londonNow(new Date(now - 864e5));
+      const p = db2.prepare("SELECT * FROM polls WHERE id IN (?,?) ORDER BY id DESC LIMIT 1").get(l.day, y.day);
+      return { poll: p ? { id: p.id, question: p.question, storyId: p.story_id, createdAt: p.created_at } : null };
+    }
+    var counts = (id) => {
+      const r = db2.prepare("SELECT choice, COUNT(*) c FROM poll_votes WHERE poll_id=? GROUP BY choice").all(id);
+      const o = { yes: 0, no: 0 };
+      r.forEach((x) => {
+        o[x.choice] = x.c;
+      });
+      return o;
+    };
+    function vote(id, ip, choice) {
+      if (!["yes", "no"].includes(choice)) return { status: 400 };
+      if (!db2.prepare("SELECT 1 FROM polls WHERE id=?").get(id)) return { status: 404 };
+      const voter = crypto.createHash("sha256").update(`${ip}|${id}|${process.env.POLL_SALT || "recon"}`).digest("hex").slice(0, 32);
+      const r = db2.prepare("INSERT OR IGNORE INTO poll_votes (poll_id, voter, choice) VALUES (?,?,?)").run(id, voter, choice);
+      return { status: r.changes ? 200 : 409, results: counts(id) };
+    }
+    module2.exports = { ensureDailyPoll, pollPayload, counts, vote };
+  }
+});
+
+// lib/rates-official.js
+var require_rates_official = __commonJS({
+  "lib/rates-official.js"(exports2, module2) {
+    var fs = require("fs");
+    var UA = "Mozilla/5.0 (compatible; ReconBot/1.0; +official data)";
+    var MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    var MONF = (m) => MON.findIndex((x) => x === String(m).slice(0, 3).toUpperCase());
+    var d2 = (n) => String(n).padStart(2, "0");
+    var human = (iso) => {
+      const d = /* @__PURE__ */ new Date(iso + "T00:00:00Z");
+      return `${d.getUTCDate()} ${MON[d.getUTCMonth()][0] + MON[d.getUTCMonth()].slice(1).toLowerCase()} ${d.getUTCFullYear()}`;
+    };
+    function csvRows(text) {
+      const rows = [];
+      let row = [], cur = "", q = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (q) {
+          if (c === '"') {
+            if (text[i + 1] === '"') {
+              cur += '"';
+              i++;
+            } else q = false;
+          } else cur += c;
+        } else if (c === '"') q = true;
+        else if (c === ",") {
+          row.push(cur);
+          cur = "";
+        } else if (c === "\n" || c === "\r") {
+          if (c === "\r" && text[i + 1] === "\n") i++;
+          row.push(cur);
+          if (row.some((x) => x.trim() !== "")) rows.push(row);
+          row = [];
+          cur = "";
+        } else cur += c;
+      }
+      row.push(cur);
+      if (row.some((x) => x.trim() !== "")) rows.push(row);
+      return rows;
+    }
+    var isoOf = (s) => {
+      s = String(s).trim();
+      let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      m = /^(\d{1,2})[ \/-]([A-Za-z]{3})[a-z]*[ \/-](\d{4})$/.exec(s);
+      if (m && MONF(m[2]) >= 0) return `${m[3]}-${d2(MONF(m[2]) + 1)}-${d2(m[1])}`;
+      return null;
+    };
+    function series(text, dateCol, valueCol) {
+      const rows = csvRows(text);
+      if (rows.length < 2) return [];
+      const head = rows[0].map((h) => h.trim().replace(/^﻿/, "").toLowerCase());
+      const di = dateCol ? head.indexOf(dateCol) : 0, vi = valueCol ? head.indexOf(valueCol) : 1;
+      if (di < 0 || vi < 0) throw new Error("unexpected CSV columns: " + head.join("|").slice(0, 80));
+      return rows.slice(1).map((r) => ({ date: isoOf(r[di]), value: parseFloat(r[vi]) })).filter((x) => x.date && Number.isFinite(x.value)).sort((a, b) => a.date.localeCompare(b.date));
+    }
+    function lastChange(s) {
+      const last = s[s.length - 1];
+      let from = null;
+      for (let i = s.length - 1; i > 0; i--) if (Math.abs(s[i].value - s[i - 1].value) > 1e-4) {
+        from = { date: s[i].date, bp: Math.round((s[i].value - s[i - 1].value) * 100) };
+        break;
+      }
+      return { last, change: from };
+    }
+    var pct = (v) => v.toFixed(2);
+    function describe(ch, since) {
+      const { last, change } = ch, days = change ? (Date.now() - new Date(change.date)) / 864e5 : 9e9;
+      if (!change) return { lastMove: "HOLD", lastMoveDetail: "Unchanged for over two years" };
+      const dir = change.bp > 0 ? "HIKE" : "CUT", recent = days <= 45;
+      return { lastMove: recent ? dir : "HOLD", lastMoveDetail: recent ? `${dir === "HIKE" ? "+" : ""}${change.bp}bp to ${pct(last.value)}% on ${human(change.date)}` : `Unchanged since ${human(change.date)} (${change.bp > 0 ? "+" : ""}${change.bp}bp)` };
+    }
+    var fmtDate = (d) => `${d2(d.getUTCDate())}/${MON[d.getUTCMonth()][0] + MON[d.getUTCMonth()].slice(1).toLowerCase()}/${d.getUTCFullYear()}`;
+    var SOURCES = {
+      BOE: {
+        url: () => `https://www.bankofengland.co.uk/boeapps/iadb/fromshowcolumns.asp?csv.x=yes&Datefrom=${fmtDate(new Date(Date.now() - 800 * 864e5))}&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N`,
+        parse(text) {
+          const s = series(text);
+          if (!s.length) throw new Error("no Bank Rate observations");
+          const c = lastChange(s);
+          return { rateNum: c.last.value, rate: pct(c.last.value), asAt: c.last.date, ...describe(c), sub: "" };
+        }
+      },
+      ECB: {
+        url: (s) => `https://data-api.ecb.europa.eu/service/data/FM/B.U2.EUR.4F.KR.${s}.LEV?startPeriod=${new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10)}&format=csvdata`,
+        series: ["DFR", "MRR_FR", "MLFR"],
+        parse(texts) {
+          const [dfr, mro, mlf] = texts.map((t, i) => {
+            if (!t && i) return null;
+            const s = series(t, "time_period", "obs_value");
+            if (!s.length && !i) throw new Error("no ECB observations");
+            return s;
+          });
+          const c = lastChange(dfr), l = (x) => x && x.length ? pct(x[x.length - 1].value) : null;
+          return { rateNum: c.last.value, rate: pct(c.last.value), asAt: c.last.date, ...describe(c), sub: [l(mro) && `MRO ${l(mro)}%`, l(mlf) && `MLF ${l(mlf)}%`].filter(Boolean).join(" \xB7 ") };
+        }
+      },
+      FED: {
+        url: (id) => `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10)}`,
+        series: ["DFEDTARU", "DFEDTARL", "IORB"],
+        parse(texts) {
+          const [up, lo, iorb] = texts.map((t, i) => {
+            if (!t && i > 1) return null;
+            const s = series(t);
+            if (!s.length && i < 2) throw new Error("no FRED observations");
+            return s;
+          });
+          const U = lastChange(up), L = lastChange(lo), ior = iorb && iorb.length ? pct(iorb[iorb.length - 1].value) : null;
+          return { rateNum: U.last.value, rate: `${pct(L.last.value)}\u2013${pct(U.last.value)}`, asAt: U.last.date, ...describe(U), sub: ior ? `IORB ${ior}%` : "" };
+        }
+      }
+    };
+    async function getText(url, fetchFn) {
+      const r = await fetchFn(url, { headers: { "User-Agent": UA, Accept: "text/csv,text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(25e3) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const t = await r.text();
+      if (/^\s*<(!doctype|html)/i.test(t)) throw new Error("blocked (HTML returned)");
+      return t;
+    }
+    function nextMeeting(code, now) {
+      let cal = [];
+      try {
+        cal = JSON.parse(fs.readFileSync(require_files().find("calendar.json"), "utf8")).events || [];
+      } catch {
+      }
+      const e = cal.filter((x) => x.id.startsWith(code.toLowerCase() + "-") && new Date(x.date) > now).sort((a, b) => a.date.localeCompare(b.date))[0];
+      return e ? { next: e.date, nextLabel: `${d2(new Date(e.date).getUTCDate())} ${MON[new Date(e.date).getUTCMonth()]}` } : null;
+    }
+    async function refresh({ fetchFn = fetch, file = require_paths().RATES, now = /* @__PURE__ */ new Date() } = {}) {
+      const data = JSON.parse(fs.readFileSync(file, "utf8")), results = {};
+      for (const bank of data.banks) {
+        const src = SOURCES[bank.code];
+        if (!src) continue;
+        try {
+          const got = src.series ? await Promise.all(src.series.map((s, i) => getText(src.url(s), fetchFn).catch((e) => {
+            if (i === 0 || bank.code === "FED" && i === 1) throw e;
+            return "";
+          }))) : await getText(src.url(), fetchFn);
+          const p = src.parse(got);
+          const changed = bank.rateNum != null && Math.abs(p.rateNum - bank.rateNum) > 1e-3;
+          Object.assign(bank, { rate: p.rate, rateNum: p.rateNum, sub: p.sub, lastMove: p.lastMove, lastMoveDetail: p.lastMoveDetail, officialAt: now.toISOString(), officialAsAt: p.asAt, stale: false });
+          const nm = nextMeeting(bank.code, now);
+          if (nm) Object.assign(bank, nm);
+          else if (new Date(bank.next) < now) {
+            bank.next = "";
+            bank.nextLabel = "TBC";
+          }
+          if (changed) {
+            delete bank.market;
+            delete bank.marketProb;
+          }
+          results[bank.code] = { ok: true, rate: p.rate, asAt: p.asAt };
+        } catch (e) {
+          const age = bank.officialAt ? (now - new Date(bank.officialAt)) / 36e5 : 1e9;
+          if (age > 36) bank.stale = true;
+          results[bank.code] = { ok: false, error: String(e.message).slice(0, 140) };
+        }
+      }
+      if (Object.values(results).some((r) => r.ok)) data.asOf = now.toISOString().slice(0, 10);
+      data.note = "Rates auto-updated every run from official sources (BoE IADB, ECB Data Portal, FRED/Federal Reserve). Next-meeting dates come from calendar.json; market pricing from rateprobability.com when available.";
+      const tmp = file + ".tmp";
+      fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+      fs.renameSync(tmp, file);
+      console.log("[rates-official]", JSON.stringify(results));
+      return results;
+    }
+    module2.exports = { refresh, series, lastChange, csvRows, SOURCES, isoOf };
+    if (require.main === module2) {
+      require("dotenv").config();
+      refresh().then(() => process.exit(0));
+    }
   }
 });
 
@@ -1453,31 +1641,39 @@ var require_build_site = __commonJS({
     var path = require("path");
     function build(out = process.env.OUT_DIR || "dist") {
       const { storiesPayload, ratesPayload: ratesPayload2 } = require_api();
-      const trackrecord2 = require_trackrecord();
       fs.rmSync(out, { recursive: true, force: true });
       fs.mkdirSync(path.join(out, "data"), { recursive: true });
       const w = (f, o) => fs.writeFileSync(path.join(out, "data", f), JSON.stringify(o));
       w("stories.json", storiesPayload());
       w("rates.json", ratesPayload2());
-      w("trackrecord.json", trackrecord2.stats());
+      w("poll.json", require_poll().pollPayload());
       let h = fs.readFileSync(require_files().find("index.html"), "utf8");
       const sub = (a, b) => {
         if (!(a.test ? a.test(h) : h.includes(a))) throw new Error("static build: pattern not found: " + String(a).slice(0, 60));
         h = h.replace(a, b);
       };
-      sub(/fetch\('\/api\/stories'\)/, "fetch('data/stories.json',{cache:'no-cache'})");
-      sub(/fetch\('\/api\/rates'\)/, "fetch('data/rates.json',{cache:'no-cache'})");
-      sub(/fetch\('\/api\/trackrecord'\)/, "fetch('data/trackrecord.json',{cache:'no-cache'})");
+      const cfg = { stories: "data/stories.json", rates: "data/rates.json", poll: "data/poll.json", vote: (process.env.POLL_API || "").replace(/\/+$/, "") };
+      sub(/const STORIES_URL='[^']*',RATES_URL='[^']*',POLLQ='[^']*',VOTE_BASE='[^']*';/, `const STORIES_URL=${JSON.stringify(cfg.stories)},RATES_URL=${JSON.stringify(cfg.rates)},POLLQ=${JSON.stringify(cfg.poll)},VOTE_BASE=${JSON.stringify(cfg.vote)};`);
       sub("register('/sw.js')", "register('./sw.js')");
       sub("Double opt-in. Unsubscribe in one click. Your selected area of operations sets your sectors.", "Double opt-in. Unsubscribe in one click.");
       const action = process.env.SUBSCRIBE_FORM_ACTION || "";
+      const mm = /embed-subscribe\/([^/?#]+)/.exec(action), direct_link = mm ? "https://buttondown.com/" + mm[1] : "";
       const mode = process.env.SUBSCRIBE_MODE || "form";
-      const post = action && mode === "worker" ? `const em=$('#em').value;if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))throw new Error('Invalid email address.');const r=await fetch(${JSON.stringify(action)},{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Could not subscribe. Please try again later.');` : action ? `const em=$('#em').value;if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))throw new Error('Invalid email address.');await fetch(${JSON.stringify(action)},{method:'POST',mode:'no-cors',body:new URLSearchParams({email:em,embed:'1'})});` : `throw new Error('Sign-ups open soon.');`;
+      const post = action && mode === "worker" ? `const em=$('#em').value;if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))throw new Error('Invalid email address.');const r=await fetch(${JSON.stringify(action)},{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Could not subscribe. Please try again later.');` : action ? `const em=$('#em').value;if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em))throw new Error('Invalid email address.');const fm=document.createElement('form');fm.method='POST';fm.action=${JSON.stringify(action)};fm.target='_blank';fm.style.display='none';for(const [k,v] of [['email',em],['embed','1']]){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=v;fm.appendChild(i)}document.body.appendChild(fm);fm.submit();fm.remove();m.textContent='Confirmation page opened in a new tab: finish there, then check your inbox and spam folder.';${JSON.stringify(direct_link)}&&m.insertAdjacentHTML('beforeend',' <a href="${direct_link}" target="_blank" rel="noopener">Page blocked? Subscribe here.</a>');$('#em').value='';SFX.ok();b.disabled=false;return;` : `throw new Error('Sign-ups open soon.');`;
       sub(/const r=await fetch\('\/api\/subscribe'[^\n]*\n\s*const j=await r.json\(\);if\(!r.ok\)throw new Error\(j.error\|\|'Failed'\);/, post);
       sub("m.textContent='Check your inbox to confirm.'", "m.textContent='Check your inbox to confirm (and your spam folder).'");
       if (!action) console.log('[site] WARNING: SUBSCRIBE_FORM_ACTION not set: the sign-up box will say "Sign-ups open soon".');
       fs.writeFileSync(path.join(out, "index.html"), h);
       fs.copyFileSync(require_files().find("sw.js"), path.join(out, "sw.js"));
+      try {
+        const db2 = require_db(), r = db2.prepare("SELECT value FROM meta WHERE key='status'").get(), st = r ? JSON.parse(r.value) : null;
+        const e = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+        const rows = st ? [...st.feeds].sort((a, b) => a.ok - b.ok || a.name.localeCompare(b.name)).map((f) => `<tr><td>${f.ok ? "OK" : "<b>FAIL</b>"}</td><td>${e(f.name)}</td><td>${f.items}</td><td>${e(f.error || f.note || "")}</td></tr>`).join("") : "";
+        const by = st ? Object.entries(st.articlesBySource).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${e(k)} ${v}`).join(" \xB7 ") : "";
+        fs.writeFileSync(path.join(out, "status.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON status</title><style>body{background:#000;color:#ccc;font:13px ui-monospace,monospace;padding:24px;max-width:1100px;margin:auto}td,th{padding:4px 12px 4px 0;text-align:left;vertical-align:top}b{color:#fff}h1{font-size:15px;color:#fff}</style><h1>RECON \xB7 pipeline status</h1>${st ? `<p>Last run ${e(st.at)}<br>Looked back ${st.windowHours}h \xB7 ${st.articles} articles \xB7 ${st.clusters} corroborated stories (sizes ${st.clusterSizes.join(", ") || "none"}) \xB7 similarity ${st.similarity}</p><p>Articles per outlet: ${by || "none"}</p><table><tr><th>State<th>Feed<th>Items kept<th>Note</tr>${rows}</table>` : "<p>No run recorded yet.</p>"}`);
+      } catch (err) {
+        console.log("[site] status page skipped:", err.message);
+      }
       fs.writeFileSync(path.join(out, ".nojekyll"), "");
       fs.writeFileSync(path.join(out, "robots.txt"), "User-agent: *\nAllow: /\n");
       console.log(`[site] built ${out}/ (${storiesPayload().stories.length} stories)`);
@@ -1492,23 +1688,31 @@ var require_build_site = __commonJS({
 
 // scripts/run-once.js
 require("dotenv").config();
+for (const k of ["RECON_VARS", "RECON_SECRETS"]) {
+  try {
+    for (const [n, v] of Object.entries(JSON.parse(process.env[k] || "{}"))) if (n.toLowerCase() !== "github_token" && v !== "" && v != null && process.env[n] === void 0) process.env[n] = String(v);
+  } catch {
+  }
+}
 var db = require_db();
 var pipeline = require_pipeline();
 var rateprob = require_rateprobability();
-var trackrecord = require_trackrecord();
 var nl = require_newsletter();
 var bd = require_buttondown();
 var rsd = require_resend();
 var { ratesPayload } = require_api();
+var poll = require_poll();
+var official = require_rates_official();
 var meta = (k) => (db.prepare("SELECT value FROM meta WHERE key=?").get(k) || {}).value;
 var setMeta = (k, v) => db.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES (?,?)").run(k, String(v));
 (async () => {
+  await official.refresh().catch((e) => console.log("[rates-official] failed:", e.message));
   if (process.env.SKIP_RATES !== "1" && (!meta("last_rates_at") || Date.now() - +meta("last_rates_at") > 10 * 36e5)) {
     await rateprob.refresh().catch((e) => console.log("[rates] failed:", e.message));
     setMeta("last_rates_at", Date.now());
   }
   await pipeline().catch((e) => console.log("[pipeline] failed:", e.message));
-  trackrecord.resolve();
+  await poll.ensureDailyPoll().catch((e) => console.log("[poll] failed:", e.message));
   if (["buttondown", "resend"].includes(process.env.NEWSLETTER_PROVIDER) && bd.briefDue()) {
     const sel = nl.storiesFor([]);
     if (sel.all.length) {
