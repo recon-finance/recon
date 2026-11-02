@@ -52,6 +52,9 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           LLM_MIN_INTERVAL_MS: ${{ vars.LLM_MIN_INTERVAL_MS }}
           MAX_LLM_CALLS_PER_DAY: ${{ vars.MAX_LLM_CALLS_PER_DAY }}
+          POLL_API: ${{ vars.POLL_API }}
+          RECON_VARS: ${{ toJSON(vars) }}
+          RECON_SECRETS: ${{ toJSON(secrets) }}
         run: node recon-run.js
       - name: Save data for the next run
         run: |
