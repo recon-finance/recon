@@ -1192,7 +1192,7 @@ ${html}`);
     function shell(inner) {
       return `<div style="background:#000;padding:24px;font-family:Helvetica,Arial,sans-serif;color:#b3b3b3"><div style="max-width:600px;margin:auto;border:1px solid #242424;padding:28px"><div style="color:#fff;letter-spacing:.3em;font-size:13px;font-weight:700;margin-bottom:4px">RECON</div><div style="color:#7a7a7a;letter-spacing:.14em;font-size:10px;margin-bottom:20px">UK MORNING BRIEF</div>${inner}</div></div>`;
     }
-    var DAILY_STORIES = () => +(process.env.DAILY_STORIES || 3);
+    var DAILY_STORIES = () => +(process.env.DAILY_STORIES || 8);
     var loadRates = () => {
       try {
         return JSON.parse(fs.readFileSync(require_paths().RATES, "utf8"));
@@ -1231,7 +1231,22 @@ ${html}`);
       return [1, 2, 3].map((i) => `<span style="color:${i <= n ? T.ink : T.mute}">${i <= n ? "&#9632;" : "&#9633;"}</span>`).join("&nbsp;");
     };
     var tag = (txt, kind) => kind === "solid" ? `<span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.16em;background:${T.ink};color:#000000;padding:2px 6px;border:1px solid ${T.ink}">${txt}</span>` : `<span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.16em;color:${kind === "ink" ? T.ink : T.sub};padding:2px 6px;border:1px solid ${kind === "ink" ? T.ink : T.line2}">${txt}</span>`;
+    function kpiBoardCompact() {
+      const r = loadRates();
+      if (!r || !r.banks || !r.banks.length) return "";
+      const short = (b) => b.marketProb ? `~${Math.round(b.marketProb.pct)}% ${b.marketProb.dir === "HOLD" ? "HOLD" : (b.marketProb.dir === "HIKE" ? "+" : "-") + b.marketProb.bp + "bp"}` : b.market || "";
+      const line = (k, v) => `<div style="margin-top:9px">${label(k, "font-size:9px;letter-spacing:.12em")}<div style="margin-top:3px;font-family:${SANS};font-size:11.5px;line-height:1.35;color:${T.sub}">${v}</div></div>`;
+      const cell = (b) => {
+        const nx = new Date(b.next), when = isNaN(nx) ? esc(b.nextLabel || "") : `${String(nx.getUTCDate()).padStart(2, "0")} ${MON[nx.getUTCMonth()]}`;
+        return `<td width="33%" valign="top" style="background:${T.panel};border:1px solid ${T.line};padding:12px 10px 12px"><div>${label(esc(b.code), "font-size:10px;color:" + T.ink)}</div><div style="margin-top:2px">${label(esc(b.rateLabel), "font-size:8.5px;letter-spacing:.08em")}</div>
+<div style="margin-top:10px;font-family:${SANS};font-weight:600;font-size:21px;line-height:1.1;letter-spacing:-.03em;color:#ffffff;white-space:nowrap">${esc(b.rate)}<span style="font-size:11px;font-weight:500;color:${T.sub}">${esc(b.unit || "%")}</span></div>
+<div style="margin-top:10px;border-top:1px solid ${T.line}"></div>${line("Last", tag(esc(b.lastMove), "ink"))}${line("Next", `<span style="font-family:${MONO};color:${T.ink}">${when}</span><br>${mono(tminus(b.next), "font-size:10px")}`)}${line("Market", `${esc(short(b))}${b.stale ? ` ${tag("STALE", "dim")}` : ""}`)}</td>`;
+      };
+      const gap = `<td width="6" style="font-size:0;line-height:0">&nbsp;</td>`;
+      return `${sec("&sect;1 &middot; Policy rates")}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed"><tr>${r.banks.slice(0, 3).map(cell).join(gap)}</tr></table><div style="margin:8px 0 0">${mono(`AS OF ${String(r.asOf || "").toUpperCase()} &middot; MARKET PRICING IS INDICATIVE`, "font-size:10.5px")}</div>`;
+    }
     function kpiBoard() {
+      if (process.env.BRIEF_STYLE !== "full") return kpiBoardCompact();
       const r = loadRates();
       if (!r || !r.banks || !r.banks.length) return "";
       const row = (k, v) => `<tr><td width="74" valign="top" style="padding:0;font-family:${SANS};font-size:12.5px;line-height:1.4">${label(k, "font-size:10px")}</td><td valign="top" style="padding:0 0 7px;font-family:${SANS};font-size:12.5px;line-height:1.4;color:${T.sub}">${v}</td></tr>`;
@@ -1261,7 +1276,22 @@ ${html}`);
     }
     var link = (id) => process.env.SITE_URL || process.env.BASE_URL ? `${(process.env.SITE_URL || process.env.BASE_URL).replace(/\/$/, "")}/#rpt-${id}` : "";
     var precOf = (s) => s.kind === "RELEASE" ? ["OFFICIAL", "solid"] : s.source_count >= 6 ? ["FLASH", "solid"] : s.source_count >= 4 ? ["PRIORITY", "ink"] : ["ROUTINE", "dim"];
+    function compactHTML(s) {
+      const srcs = JSON.parse(s.sources), an = s.analysis ? JSON.parse(s.analysis) : null, l = link(s.id), [pl, pk] = precOf(s);
+      const metaLeft = s.kind === "RELEASE" ? `${label("Source", "margin-right:8px")}${mono(`${esc((srcs[0] || {}).name || "")} &middot; PRIMARY DOCUMENT`, "color:" + T.sub)}` : `${label("Sources")}&nbsp;${mono(String(s.source_count), "color:" + T.sub)} &nbsp;&nbsp; ${label("Confidence")}&nbsp;${squares(s.confidence)}&nbsp;${mono(esc(s.confidence), "color:" + T.sub)}`;
+      const det = s.kind === "RELEASE" && s.read_mins ? `Assessment &middot; ${s.read_mins} min` : s.read_mins ? `Assessment &middot; ${s.read_mins} min` : "Details";
+      const btn = l ? `<a href="${esc(l)}" style="font-family:${SANS};font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${T.ink};text-decoration:none;border-bottom:1px solid ${T.ink};padding-bottom:2px">${det}&nbsp;&rarr;</a>` : "";
+      const head = esc(s.headline);
+      return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line};table-layout:fixed"><tr><td style="padding:24px 0 22px;word-wrap:break-word;overflow-wrap:break-word">
+<div style="margin-bottom:11px">${mono(`RPT-${String(s.id).padStart(4, "0")}`)}&nbsp;&nbsp;${tag(pl, pk)}&nbsp;&nbsp;${label(esc(s.topic))}&nbsp;&nbsp;${mono(ago(s.updated_at.replace(" ", "T") + "Z"))}</div>
+<div style="font-family:${SANS};font-weight:600;font-size:20px;line-height:1.3;letter-spacing:-.015em;margin:0 0 10px">${l ? `<a href="${esc(l)}" style="color:#ffffff;text-decoration:none">${head}</a>` : `<span style="color:#ffffff">${head}</span>`}</div>
+<div style="font-family:${SANS};font-size:15px;line-height:1.6;color:${T.sub}"><b style="font-size:11px;letter-spacing:.14em;color:${T.ink}">BLUF</b>&nbsp;&nbsp;${esc(s.summary)}</div>
+${an ? `<div style="margin-top:13px;padding-left:12px;border-left:2px solid ${T.ink};font-family:${SANS};font-size:14.5px;line-height:1.55;color:${T.ink}"><span style="font-family:${MONO};font-weight:700;font-size:9.5px;letter-spacing:.14em;background:${T.ink};color:#000000;padding:3px 6px">RECON TAKE</span>&nbsp;&nbsp;${esc(an.thesis)}</div>` : ""}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px"><tr><td valign="middle">${metaLeft}</td><td align="right" valign="middle" style="white-space:nowrap;padding-left:10px">${btn}</td></tr></table>
+</td></tr></table>`;
+    }
     function storyHTML(s) {
+      if (process.env.BRIEF_STYLE !== "full") return compactHTML(s);
       const pts = JSON.parse(s.key_points), srcs = JSON.parse(s.sources), an = s.analysis ? JSON.parse(s.analysis) : null, l = link(s.id), [pl, pk] = precOf(s);
       const metaRight = s.kind === "RELEASE" ? `${label("Source", "margin-right:8px")}${mono(`${esc((srcs[0] || {}).name || "")} &middot; PRIMARY DOCUMENT`, "color:" + T.sub)}` : `${label("Sources")}&nbsp;${mono(String(s.source_count), "color:" + T.sub)} &nbsp;&nbsp; ${label("Confidence")}&nbsp;${squares(s.confidence)}&nbsp;${mono(esc(s.confidence), "color:" + T.sub)}`;
       return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line};table-layout:fixed"><tr><td style="padding:26px 0 24px;word-wrap:break-word;overflow-wrap:break-word">
@@ -1285,7 +1315,7 @@ ${s.read_mins && l ? `<div style="margin-top:14px"><a href="${esc(l)}" style="fo
       const releases = sel.releases.length ? `${sec("&sect;3 &middot; Official releases")}${sel.releases.map(storyHTML).join("")}` : "";
       const html = min(`<div style="background:${T.bg};font-family:${SANS};color:${T.ink}">${strip()}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line}"><tr><td style="padding:16px 20px"><span style="font-family:${SANS};font-weight:700;font-size:15px;letter-spacing:.32em;color:#ffffff">RECON</span></td><td align="right" style="padding:16px 20px">${mono(dtg())}</td></tr></table>
-<div style="padding:26px 20px 8px">${label("UK morning brief")}<div style="font-family:${SANS};font-weight:600;font-size:24px;line-height:1.25;letter-spacing:-.02em;color:#ffffff;margin:10px 0 6px">${esc(dateLong())}</div><div style="font-family:${SANS};font-size:14px;line-height:1.5;color:${T.sub}">Policy rates, then the day's main reports. Tube read ${mins} min.</div>
+<div style="padding:26px 20px 8px">${label("UK morning brief")}<div style="font-family:${SANS};font-weight:600;font-size:24px;line-height:1.25;letter-spacing:-.02em;color:#ffffff;margin:10px 0 6px">${esc(dateLong())}</div><div style="font-family:${SANS};font-size:14px;line-height:1.5;color:${T.sub}">Policy rates, then the day's reports. Tap any headline or Details to read the full assessment on RECON. Tube read ${mins} min.</div>
 ${kpiBoard()}${sec("&sect;2 &middot; Intelligence reports")}${sel.reports.map(storyHTML).join("") || `<p style="color:${T.sub}">No corroborated stories yet today.</p>`}${releases}
 <div style="padding:22px 0 20px;font-family:${SANS};font-size:12px;line-height:1.6;color:${T.mute}">AI-generated summaries of third-party reporting; may contain errors. Verify via the linked sources. General information only, not financial advice.${footer}</div></div>${strip()}</div>`);
       return { mins, html };
@@ -1351,7 +1381,16 @@ var require_buttondown = __commonJS({
     }
     function briefDue(now = /* @__PURE__ */ new Date()) {
       const l = londonNow(now), last = db2.prepare("SELECT value FROM meta WHERE key='last_brief_day'").get();
-      return l.hour >= 7 && (!last || last.value !== l.day);
+      if (process.env.BRIEF_WEEKDAYS_ONLY === "1" && ["Sat", "Sun"].includes(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now))) return false;
+      return l.hour >= 6 && (!last || last.value !== l.day);
+    }
+    function sevenAmLondon(now = /* @__PURE__ */ new Date()) {
+      const l = londonNow(now);
+      for (const h of [7, 6]) {
+        const d = /* @__PURE__ */ new Date(`${l.day}T0${h}:00:00Z`), p = londonNow(d);
+        if (p.day === l.day && p.hour === 7) return d > now ? d : null;
+      }
+      return null;
     }
     var markSent = (now = /* @__PURE__ */ new Date()) => db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('last_brief_day',?)").run(londonNow(now).day);
     var nl2 = require_newsletter();
@@ -1402,15 +1441,14 @@ Sources: ${srcs.map((x) => `[${x.name}](${x.url})`).join(" \xB7 ")}`);
     async function publish(sel, extra) {
       if (!process.env.BUTTONDOWN_API_KEY) throw new Error("BUTTONDOWN_API_KEY not set");
       const subject = nl2.subjectFor(sel);
-      const res = await fetch("https://api.buttondown.email/v1/emails", {
-        method: "POST",
-        headers: { Authorization: `Token ${process.env.BUTTONDOWN_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, body: body(sel, extra), status: process.env.BUTTONDOWN_AUTOSEND === "1" ? "about_to_send" : "draft" })
-      });
+      const auto = process.env.BUTTONDOWN_AUTOSEND === "1", at = auto ? sevenAmLondon() : null;
+      const post = (payload) => fetch("https://api.buttondown.email/v1/emails", { method: "POST", headers: { Authorization: `Token ${process.env.BUTTONDOWN_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ subject, body: body(sel, extra), ...payload }) });
+      if (auto && !at && londonNow().hour < 7) throw new Error("could not work out 07:00 London time");
+      const res = await post(!auto ? { status: "draft" } : at ? { status: "scheduled", publish_date: at.toISOString() } : { status: "about_to_send" });
       if (!res.ok) throw new Error(`Buttondown ${res.status}: ${(await res.text()).slice(0, 300)}`);
-      return { subject, mode: process.env.BUTTONDOWN_AUTOSEND === "1" ? "sent" : "draft" };
+      return { subject, mode: !auto ? "draft" : at ? `scheduled for ${at.toISOString()}` : "sent" };
     }
-    module2.exports = { briefDue, markSent, markdown, body, publish, londonNow };
+    module2.exports = { briefDue, markSent, markdown, body, publish, londonNow, sevenAmLondon };
   }
 });
 
@@ -1629,7 +1667,7 @@ var require_rates_official = __commonJS({
       const { last, change } = ch, days = change ? (Date.now() - new Date(change.date)) / 864e5 : 9e9;
       if (!change) return { lastMove: "HOLD", lastMoveDetail: "Unchanged for over two years" };
       const dir = change.bp > 0 ? "HIKE" : "CUT", recent = days <= 45;
-      return { lastMove: recent ? dir : "HOLD", lastMoveDetail: recent ? `${dir === "HIKE" ? "+" : ""}${change.bp}bp to ${pct(last.value)}% on ${human(change.date)}` : `Unchanged since ${human(change.date)} (${change.bp > 0 ? "+" : ""}${change.bp}bp)` };
+      return { lastMove: recent ? dir : "HOLD", lastMoveDetail: recent ? `${dir === "HIKE" ? "+" : ""}${change.bp}bp to ${pct(last.value)}% on ${human(change.date)}` : `Unchanged since ${human(change.date)} (last move ${change.bp > 0 ? "+" : ""}${change.bp}bp)` };
     }
     var fmtDate = (d) => `${d2(d.getUTCDate())}/${MON[d.getUTCMonth()][0] + MON[d.getUTCMonth()].slice(1).toLowerCase()}/${d.getUTCFullYear()}`;
     var SOURCES = {
@@ -1643,7 +1681,7 @@ var require_rates_official = __commonJS({
         }
       },
       ECB: {
-        url: (s) => `https://data-api.ecb.europa.eu/service/data/FM/B.U2.EUR.4F.KR.${s}.LEV?startPeriod=${new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10)}&format=csvdata`,
+        url: (s, alt) => `https://${alt ? "sdw-wsrest.ecb.europa.eu" : "data-api.ecb.europa.eu"}/service/data/FM/B.U2.EUR.4F.KR.${s}.LEV?startPeriod=${new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10)}&format=csvdata`,
         series: ["DFR", "MRR_FR", "MLFR"],
         parse(texts) {
           const [dfr, mro, mlf] = texts.map((t, i) => {
@@ -1672,7 +1710,7 @@ var require_rates_official = __commonJS({
       }
     };
     async function getText(url, fetchFn) {
-      const r = await fetchFn(url, { headers: { "User-Agent": UA, Accept: "text/csv,text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(25e3) });
+      const r = await fetchFn(url, { headers: { "User-Agent": UA, Accept: "*/*" }, redirect: "follow", signal: AbortSignal.timeout(25e3) });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const t = await r.text();
       if (/^\s*<(!doctype|html)/i.test(t)) throw new Error("blocked (HTML returned)");
@@ -1693,7 +1731,9 @@ var require_rates_official = __commonJS({
         const src = SOURCES[bank.code];
         if (!src) continue;
         try {
-          const got = src.series ? await Promise.all(src.series.map((s, i) => getText(src.url(s), fetchFn).catch((e) => {
+          const got = src.series ? await Promise.all(src.series.map((s, i) => getText(src.url(s), fetchFn).catch((e0) => bank.code === "ECB" ? getText(src.url(s, true), fetchFn).catch((e1) => {
+            throw new Error(`${e0.message}; fallback ${e1.message}`);
+          }) : Promise.reject(e0)).catch((e) => {
             if (i === 0 || bank.code === "FED" && i === 1) throw e;
             return "";
           }))) : await getText(src.url(), fetchFn);
@@ -1723,6 +1763,10 @@ var require_rates_official = __commonJS({
       fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
       fs.renameSync(tmp, file);
       console.log("[rates-official]", JSON.stringify(results));
+      try {
+        require_db().prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('rates_status', ?)").run(JSON.stringify({ at: now.toISOString(), results }));
+      } catch {
+      }
       return results;
     }
     module2.exports = { refresh, series, lastChange, csvRows, SOURCES, isoOf };
@@ -1769,7 +1813,14 @@ var require_build_site = __commonJS({
         const e = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
         const rows = st ? [...st.feeds].sort((a, b) => a.ok - b.ok || a.name.localeCompare(b.name)).map((f) => `<tr><td>${f.ok ? "OK" : "<b>FAIL</b>"}</td><td>${e(f.name)}</td><td>${f.items}</td><td>${e(f.error || f.note || "")}</td></tr>`).join("") : "";
         const by = st ? Object.entries(st.articlesBySource).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${e(k)} ${v}`).join(" \xB7 ") : "";
-        fs.writeFileSync(path.join(out, "status.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON status</title><style>body{background:#000;color:#ccc;font:13px ui-monospace,monospace;padding:24px;max-width:1100px;margin:auto}td,th{padding:4px 12px 4px 0;text-align:left;vertical-align:top}b{color:#fff}h1{font-size:15px;color:#fff}</style><h1>RECON \xB7 pipeline status</h1>${st ? `<p>Last run ${e(st.at)}<br>Looked back ${st.windowHours}h \xB7 ${st.articles} articles \xB7 ${st.clusters} corroborated stories (sizes ${st.clusterSizes.join(", ") || "none"}) \xB7 similarity ${st.similarity}</p><p>Articles per outlet: ${by || "none"}</p><p><b>What happened to each candidate story</b><br>${(st.outcomes || []).map(e).join("<br>") || "none"}</p><p><b>Story candidates</b><br>${(st.outcomes || []).map(e).join("<br>") || "none formed"}</p><table><tr><th>State<th>Feed<th>Items kept<th>Note</tr>${rows}</table>` : "<p>No run recorded yet.</p>"}`);
+        fs.writeFileSync(path.join(out, "status.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON status</title><style>body{background:#000;color:#ccc;font:13px ui-monospace,monospace;padding:24px;max-width:1100px;margin:auto}td,th{padding:4px 12px 4px 0;text-align:left;vertical-align:top}b{color:#fff}h1{font-size:15px;color:#fff}</style><h1>RECON \xB7 pipeline status</h1>${st ? `<p>Last run ${e(st.at)}<br>Looked back ${st.windowHours}h \xB7 ${st.articles} articles \xB7 ${st.clusters} corroborated stories (sizes ${st.clusterSizes.join(", ") || "none"}) \xB7 similarity ${st.similarity}</p><p>Articles per outlet: ${by || "none"}</p><p><b>Policy rates (official feeds)</b><br>${(() => {
+          try {
+            const rs = JSON.parse(db2.prepare("SELECT value FROM meta WHERE key='rates_status'").get().value);
+            return Object.entries(rs.results).map(([k, v]) => `${k}: ${v.ok ? "OK " + e(v.rate) + " (as at " + e(v.asAt) + ")" : "FAILED " + e(v.error)}`).join("<br>");
+          } catch {
+            return "no run recorded";
+          }
+        })()}</p><p><b>What happened to each candidate story</b><br>${(st.outcomes || []).map(e).join("<br>") || "none"}</p><p><b>Story candidates</b><br>${(st.outcomes || []).map(e).join("<br>") || "none formed"}</p><table><tr><th>State<th>Feed<th>Items kept<th>Note</tr>${rows}</table>` : "<p>No run recorded yet.</p>"}`);
       } catch (err) {
         console.log("[site] status page skipped:", err.message);
       }
@@ -1814,7 +1865,8 @@ var setMeta = (k, v) => db.prepare("INSERT OR REPLACE INTO meta (key,value) VALU
   await poll.ensureDailyPoll().catch((e) => console.log("[poll] failed:", e.message));
   if (["buttondown", "resend"].includes(process.env.NEWSLETTER_PROVIDER) && bd.briefDue()) {
     const sel = nl.storiesFor([]);
-    if (sel.all.length) {
+    const enough = sel.all.length >= 3 || sel.all.length >= 1 && bd.londonNow().hour >= 8;
+    if (enough) {
       try {
         const rates = ratesPayload().banks.map((b) => `${b.code} ${b.rate}${b.unit || "%"}`).join(" \xB7 ");
         const info = await (process.env.NEWSLETTER_PROVIDER === "resend" ? rsd : bd).publish(sel, { mins: nl.readMins(sel.all), rates, date: (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }) });
@@ -1823,7 +1875,7 @@ var setMeta = (k, v) => db.prepare("INSERT OR REPLACE INTO meta (key,value) VALU
       } catch (e) {
         console.log("[brief] FAILED:", e.message);
       }
-    } else console.log("[brief] nothing to send yet");
+    } else console.log(`[brief] waiting for more stories (${sel.all.length} so far)`);
   }
   require_build_site().build();
   if (process.env.GITHUB_STEP_SUMMARY) {
