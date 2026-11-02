@@ -439,8 +439,15 @@ var require_llm = __commonJS({
       const used = db2.prepare("SELECT calls FROM llm_usage WHERE day=?").get(today());
       if (used && used.calls >= CAP()) throw new Error(`daily AI call cap reached (${CAP()}); raise MAX_LLM_CALLS_PER_DAY if intended`);
       const p = provider();
-      if (p === "anthropic") return anthropicJSON(system, user, opts);
-      if (p === "openai") return openaiJSON(system, user, opts);
+      const call = (o) => p === "anthropic" ? anthropicJSON(system, user, o) : openaiJSON(system, user, o);
+      if (p === "anthropic" || p === "openai") {
+        try {
+          return await call(opts);
+        } catch (e) {
+          if (/truncated/.test(e.message) && opts.max) return call({ ...opts, max: Math.min(opts.max * 2, 16e3) });
+          throw e;
+        }
+      }
       throw new Error("no AI provider configured (set ANTHROPIC_API_KEY, or LLM_BASE_URL + LLM_API_KEY + LLM_MODEL)");
     }
     module2.exports = { json, configured };
@@ -506,7 +513,27 @@ var require_verify = __commonJS({
         }
         out.watch.push({ when: String(w.when || "").slice(0, 40), what: String(w.what).slice(0, 220) });
       }
-      const words = [...out.situation, ...out.background, ...out.market_reaction, ...out.compare, ...out.watch.map((w) => w.what), ...out.numbers.map((n) => `${n.label} ${n.value} ${n.context}`)].join(" ").split(/\s+/).filter(Boolean).length;
+      const count = () => [...out.situation, ...out.background, ...out.market_reaction, ...out.compare, ...out.watch.map((w) => w.what), ...out.numbers.map((n) => `${n.label} ${n.value} ${n.context}`)].join(" ").split(/\s+/).filter(Boolean).length;
+      const MAXW = +(process.env.MAX_ASSESSMENT_WORDS || 600);
+      const trims = [
+        () => out.background.length > 1 && out.background.pop(),
+        () => out.compare.length > 1 && out.compare.pop(),
+        () => out.market_reaction.length > 1 && out.market_reaction.pop(),
+        () => out.numbers.length > 6 && out.numbers.pop(),
+        () => out.watch.length > 2 && out.watch.pop(),
+        () => out.background.length && out.background.pop(),
+        () => out.compare.length && out.compare.pop(),
+        () => out.situation.length > 2 && out.situation.pop(),
+        () => out.numbers.length > 3 && out.numbers.pop(),
+        () => out.market_reaction.length && out.market_reaction.pop()
+      ];
+      for (const t of trims) {
+        while (count() > MAXW && t()) {
+          stats.trimmed = (stats.trimmed || 0) + 1;
+        }
+        if (count() <= MAXW) break;
+      }
+      const words = count();
       out.words = words;
       return { assessment: out, stats, words };
     }
@@ -523,6 +550,9 @@ var require_verify = __commonJS({
         counter: cleanText([String(a.counter || "")], corpus, stats)[0] || "",
         conviction: ["LOW", "MEDIUM", "HIGH"].includes(a.conviction) ? a.conviction : "MEDIUM"
       };
+      const MAXA = +(process.env.MAX_ANALYSIS_WORDS || 380), wc = () => [out.thesis, ...out.body, out.counter].join(" ").split(/\s+/).filter(Boolean).length;
+      while (wc() > MAXA && out.body.length > 1) out.body.pop();
+      out.words = wc();
       return { analysis: out, stats };
     }
     module2.exports = { cleanAssessment, cleanAnalysis, allPresent, numbers };
@@ -548,7 +578,7 @@ Hard rules:
 - Do not copy phrasing from the articles; paraphrase. No direct quotes.
 - Where outlets differ on a fact or framing, say so in "compare" and name the outlets by marker.
 - No speculation, no opinion, no advice here. (Opinion lives in a separate step.)
-- Depth: aim for roughly 600-900 words across the assessment sections when the sources contain that much detail. Never pad. If the sources are thin, write less.
+- Depth: HARD LIMIT 550 words across all assessment sections together (a 3-minute read). Aim for 400-550 when the sources hold that much detail; be dense and cut anything non-essential. Never pad. If the sources are thin, write less.
 - Topic must be one of: ${TOPICS.join(" | ")}. STOCKS = equity markets (FTSE indices, Wall Street, individual listed companies: results, profit warnings, dividends, buybacks, M&A, IPOs, analyst moves). MARKETS = gilts, sterling and other FX, commodities, credit.
 - uk_relevance: 5 = about the UK economy, UK banks, FTSE or FTSE-listed companies or the Bank of England; 3 = overseas event with a UK impact stated in the articles; 1-2 = no real UK angle.
 - confidence: HIGH = three or more sources agree on the core facts (with only two sources, never above MEDIUM); MEDIUM = minor differences; LOW = material conflict or thin detail.
@@ -568,7 +598,7 @@ Include up to 10 rows in "numbers", most decision-relevant first.`;
       const body = articles.map((a, i) => `[${i + 1}] ${isFull(a) ? "PRIMARY" : "CORROBORATION"} | ${a.source} | ${a.published_at}
 TITLE: ${a.title}
 TEXT: ${textOf(a) || "(headline only)"}`).join("\n\n");
-      const json = await llm.json(SYSTEM + (brief ? BRIEF_NOTE : ""), body, { max: brief ? 1200 : 5e3 });
+      const json = await llm.json(SYSTEM + (brief ? BRIEF_NOTE : ""), body, { max: brief ? 2500 : 6e3 });
       if (!json || !json.same_event) return null;
       if (!TOPICS.includes(json.topic)) json.topic = "MARKETS";
       if (!["HIGH", "MEDIUM", "LOW"].includes(json.confidence)) json.confidence = "MEDIUM";
@@ -620,7 +650,7 @@ var require_analyse = __commonJS({
 You are given (1) one REPORT, (2) other recent RECON REPORTS (with ids), (3) the UPCOMING EVENTS calendar (with ids), and (4) current policy RATES.
 
 Rules:
-- Take a clear view in one sentence (the thesis). Then 2-3 short paragraphs of reasoning (150-220 words total) that connect this report to other recent reports and/or upcoming events where the link is genuine. If nothing genuinely connects, say so; never force a link.
+- Take a clear view in one sentence (the thesis). Then 2-4 short paragraphs of reasoning (250-330 words total: a 1.5 to 2 minute read; hard limit 350 words including the counter-case) that connect this report to other recent reports and/or upcoming events where the link is genuine. If nothing genuinely connects, say so; never force a link.
 - Use ONLY facts present in the supplied material. Never invent statistics, quotes, dates, events or sources. Every number you use must appear in the supplied material. Do not compute new figures.
 - It is analysis and opinion, not fact: frame it as the desk's view. Give a counter-case (what would make this view wrong).
 - No investment advice: no buy/sell/hold recommendations, no price targets.
@@ -669,7 +699,7 @@ ${ctxCal}
 
 CURRENT POLICY RATES:
 ${ctxRates}`;
-      const raw = await llm.json(SYSTEM, prompt, { max: 1500, model: process.env.ANALYSIS_MODEL });
+      const raw = await llm.json(SYSTEM, prompt, { max: 2e3, model: process.env.ANALYSIS_MODEL });
       const { analysis, stats } = cleanAnalysis(raw, prompt, new Set(others.map((o) => o.id)), new Set(cal.map((e) => e.id)));
       if (!analysis) {
         console.log(`  - analysis ${s.id} rejected (unverifiable figures)`);
@@ -707,7 +737,7 @@ Hard rules:
 - Every number, date and name must appear in the provided text. NEVER compute derived figures (changes, averages, percentages) or round differently. If a figure is not in the text, leave it out.
 - Paraphrase; no direct quotes; add inline marker [1] at the end of sentences (there is a single source).
 - No speculation, opinion or advice here (opinion lives in a separate step).
-- Depth: roughly 250-600 words across the assessment sections depending on how much the document contains. Never pad.
+- Depth: HARD LIMIT 550 words across all assessment sections (a 3-minute read); roughly 250-550 depending on the document. Be dense. Never pad.
 - MATERIALITY: readers are bankers and investors who want news that moves rates, markets, bank earnings, tax or regulation across the sector. Return {"skip":true} for anything routine or narrow: individual firms or people, insolvencies, enforcement or fines, pension-scheme admin, guidance, consultations without a decision, speeches without new policy, or anything with no UK relevance (uk_relevance < 3 and not a Fed/ECB item that matters to UK rates). When in doubt, skip.
 - topic must be one of: ${TOPICS.join(" | ")}.
 Return ONLY JSON:
@@ -852,7 +882,7 @@ var require_pipeline = __commonJS({
           outs.push(label + " \u2192 already published");
           continue;
         }
-        if (fin(c) < 2) {
+        if (fin(c) < 1) {
           outs.push(label + " \u2192 not finance news (skipped before AI)");
           continue;
         }
