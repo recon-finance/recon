@@ -81,6 +81,9 @@ h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
 .kpi{padding:16px 18px;transition:border-color .2s}
 .kpi:hover{--c:var(--ink);border-color:var(--line2)}
 .kh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rl::before{content:" · "}
+.nl::before{content:" · "}
+.kdet{display:none}
 .kv{font:600 38px/1.1 var(--sans);letter-spacing:-.03em;margin:14px 0 2px;white-space:nowrap}
 .kv small{font:500 18px var(--sans);color:var(--sub);margin-left:2px}
 .ksub{font:11px var(--mono);color:var(--mute);min-height:16px}
@@ -190,6 +193,100 @@ footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
 #boot{position:fixed;inset:0;background:#000;z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
 #boot pre{font:12px/1.9 var(--mono);color:var(--sub);margin:0;letter-spacing:.08em}
 #boot.off{opacity:0;pointer-events:none}
+
+/* ---------- MOBILE ---------- one thing per screen: a compact rates strip (tap a card for its detail), a swipe strip of sectors,
+   and report cards that show headline + two lines, expanding on tap (progressive disclosure) instead of a wall of text. Colours, fonts and sounds are unchanged. */
+.lede .l-short{display:none}
+@media(max-width:860px){
+ html{scroll-padding-top:calc(var(--barh,52px) + 56px)}
+ *{-webkit-tap-highlight-color:transparent}
+ .wrap{display:flex;flex-direction:column}
+ .rail{display:contents}
+ .rail>.label{display:none}
+ .bar{padding:10px 16px}
+ .ao{order:0;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0;padding:9px 16px;position:sticky;top:var(--barh,52px);z-index:9;background:rgba(0,0,0,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .ao::-webkit-scrollbar{display:none}
+ .ao button{flex:0 0 auto;white-space:nowrap;min-height:40px;display:flex;align-items:center;padding:0 14px;font-size:13.5px}
+ main{order:1;padding:18px 16px 40px}
+ .sub{order:2;padding:28px 16px 96px;border-top:1px solid var(--line)}
+ h1{font-size:26px;margin:8px 0 6px}
+ .lede .l-long{display:none}.lede .l-short{display:inline}
+ .lede{font-size:14px;line-height:1.5;margin-bottom:20px}
+ .sec{margin-bottom:10px}
+ /* policy rates: three compact cards side by side, tap one for its detail */
+ .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px}
+ .kpi{padding:10px 9px 11px;cursor:pointer;min-height:44px}
+ .kpi.sel{--c:var(--ink);border-color:var(--ink)}
+ .kh{display:block}
+ .kh .mono{display:none}
+ .kh .label{display:block;font-size:10.5px;color:var(--ink)}
+ .rl{display:block;font-size:8px;letter-spacing:.08em;margin-top:4px;color:var(--mute);line-height:1.3}
+ .rl::before,.nl::before{content:none}
+ .nl{display:block;color:var(--sub);margin-top:1px}
+ .kdet .tag{margin-right:8px}
+ .kdet .nl{display:inline}.kdet .nl::before{content:" · "}
+ .kv{font-size:21px;margin:10px 0 0;letter-spacing:-.04em;height:26px;display:flex;align-items:baseline}
+ .kv.long{font-size:16.5px}
+ .kv small{font-size:10px;margin-left:1px}
+ .ksub,.kfoot,.kr .dt{display:none}
+ .kr{margin-top:10px;padding-top:9px;gap:9px}
+ .kr div{grid-template-columns:1fr;gap:3px;font-size:11px}
+ .kr div:nth-child(3){display:none}
+ .kr .label{font-size:8.5px;padding-top:0}
+ .tag{margin-right:0;font-size:9.5px;padding:1px 5px}
+ .kdet{display:none;padding:14px 16px;margin:0 0 10px}
+ .kdet.on{display:block}
+ .kdet .kr{margin-top:10px;padding-top:10px}
+ .kdet .kr div{grid-template-columns:64px 1fr;gap:8px;font-size:13px}
+ .kdet .kr div:nth-child(3){display:grid}
+ .kfoot2{display:flex;justify-content:space-between;margin-top:12px;font:10px var(--mono);color:var(--mute)}
+ .kfoot2 a{text-decoration:none;border-bottom:1px solid var(--line2);padding:6px 0}
+ .knote{margin:0 0 22px;font-size:9.5px}
+ /* counts: three that matter, small */
+ .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;margin:0}
+ .stat:nth-child(3),.stat:nth-child(4){display:none}
+ .stat b{font-size:20px}
+ .stat .label{font-size:9px;letter-spacing:.1em;margin-top:5px}
+ /* report cards */
+ .story{display:block;padding:18px 0 16px;cursor:pointer}
+ .story:active{background:rgba(255,255,255,.025)}
+ .idx{display:none}
+ .meta1{gap:8px;margin-bottom:9px;flex-wrap:nowrap}
+ .meta1 .label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ .meta1 .mono{margin-left:auto;font-size:10.5px}
+ .chev{flex:0 0 auto;width:22px;text-align:center;font:500 18px/1 var(--mono);color:var(--sub)}
+ .chev::before{content:"+"}
+ .story.ex .chev::before,.story.open .chev::before{content:"\2212"}
+ .story h2{font-size:18.5px;line-height:1.3;margin:0 0 8px}
+ .bluf{font-size:14.5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .story.ex .bluf,.story.open .bluf{display:block;overflow:visible}
+ .take,.meta2{display:none}
+ .story.ex .take,.story.open .take{display:block;margin-top:14px;font-size:14.5px}
+ .story.ex .meta2,.story.open .meta2{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px}
+ .tog{flex:1 1 100%;display:block;box-sizing:border-box;text-align:center;border:1px solid var(--ink);padding:13px 12px;min-height:44px;margin:4px 0 0}
+ .tog:active{background:var(--ink);color:#000}
+ .det{margin-top:16px;padding:18px 14px}
+ .det .prose p{font-size:15px;line-height:1.7}
+ .poll{padding:18px 16px}
+ .pq{font-size:19px;margin:10px 0 16px}
+ .pbtn{padding:18px 12px;min-height:56px}
+ .pbar{grid-template-columns:36px minmax(0,1fr) 50px;gap:10px}
+ .pbar b{font-size:17px}
+ .eor{padding-top:20px}
+ footer{padding:20px 16px 90px}
+}
+@media(max-width:560px){
+ .cls{font-size:8px;letter-spacing:.08em;padding:6px 4px;white-space:nowrap}
+ .bar .r #dtg{display:none}
+ .brand{font-size:14px}
+}
+#subbar{display:none}
+@media(max-width:860px){
+ #subbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(0,0,0,.96);border-top:1px solid var(--line2);backdrop-filter:blur(8px);transition:transform .25s}
+ #subbar.off{transform:translateY(110%)}
+ #subbar span{font:500 10px var(--mono);letter-spacing:.12em;color:var(--sub);text-transform:uppercase;line-height:1.4}
+ #subbar button{all:unset;cursor:pointer;background:var(--ink);color:#000;font:600 11px var(--sans);letter-spacing:.16em;padding:10px 16px;text-transform:uppercase;white-space:nowrap}
+}
 @media(prefers-reduced-motion:reduce){#boot{display:none}.link::before{animation:none}}
 </style>
 </head>
@@ -218,10 +315,10 @@ footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
  <main>
   <div class="label">SITREP · United Kingdom</div>
   <h1>UK Market Intelligence.</h1>
-  <p class="lede">Open-source reconnaissance on UK rates, banks and markets. Every report is cross-checked across independent outlets and verified against primary sources: the Bank of England, ONS, OBR and HM Treasury. Assessed. Sourced. Delivered before the open.</p>
+  <p class="lede"><span class="l-long">Open-source reconnaissance on UK rates, banks and markets. Every report is cross-checked across independent outlets and verified against primary sources: the Bank of England, ONS, OBR and HM Treasury. Assessed. Sourced. Delivered before the open.</span><span class="l-short">Open-source reconnaissance on UK rates, banks and markets. Assessed. Sourced. Delivered before the open.</span></p>
 
   <div class="sec"><span class="label">§1 · Policy rates</span></div>
-  <div class="kpis" id="kpis"></div>
+  <div class="kpis" id="kpis"></div><div class="kdet br" id="kdet"></div>
   <div class="knote" id="knote"></div>
 
   <div class="sec"><span class="label" id="s2h">§2 · Intelligence reports</span></div>
@@ -237,6 +334,7 @@ footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
   <div class="eor">— END OF REPORT —</div>
  </main>
 </div>
+<div id="subbar" class="off"><span>Morning brief · 0700 UK</span><button id="subgo" type="button">Subscribe</button></div>
 <footer>Reports are AI-generated summaries of third-party reporting and may contain errors. Verify via the linked sources. General information only, not financial advice.</footer>
 <div class="cls bot">Unclassified // Open-source intelligence // For information only</div>
 
@@ -306,18 +404,25 @@ function renderRates(){
  if(!RATES){$('#kpis').innerHTML='';return}
  const a=new Date(RATES.asOf+'T00:00:00Z');
  $('#kpis').innerHTML=RATES.banks.map((b,i)=>`<div class="kpi br" data-i="${i}">
-  <div class="kh"><span class="label">${esc(b.code)} · ${esc(b.rateLabel)}</span><span class="mono">RATE-0${i+1}</span></div>
-  <div class="kv">${esc(b.rate)}<small>${esc(b.unit||'%')}</small></div>
+  <div class="kh"><span class="label">${esc(b.code)}<span class="rl">${esc(b.rateLabel)}</span></span><span class="mono">RATE-0${i+1}</span></div>
+  <div class="kv${String(b.rate).length>5?' long':''}">${esc(b.rate)}<small>${esc(b.unit||'%')}</small></div>
   <div class="ksub">${esc(b.sub||'')}</div>
   <div class="kr">
-   <div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span>${esc(b.lastMoveDetail)}</span></div>
-   <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span> · ${esc(b.nextLabel)}</span></div>
+   <div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span><span class="dt">${esc(b.lastMoveDetail)}</span></span></div>
+   <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span><span class="nl">${esc(b.nextLabel)}</span></span></div>
    ${b.market?`<div><span class="label">Market</span><span>${esc(b.market)}</span></div>`:''}
   </div>
   <div class="kfoot"><span>SRC ${esc(b.source.name).toUpperCase()}${b.stale?'<span class="stale">STALE</span>':''}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>
   ${b.marketSource?`<div class="kfoot" style="margin-top:4px"><span>MKT PRICING ${esc(b.marketSource.name).toUpperCase()}</span><a href="${esc(safeUrl(b.marketSource.url))}" target="_blank" rel="noopener noreferrer">VIEW ↗</a></div>`:''}</div>`).join('');
+  const kd=$('#kdet');if(kd){kd.innerHTML='';kd.className='kdet'}
  $('#knote').textContent=`AS OF ${p2(a.getUTCDate())} ${MON[a.getUTCMonth()]} ${String(a.getUTCFullYear()).slice(2)} · MARKET PRICING IS INDICATIVE`;
 }
+function kpiDetail(i){const b=RATES.banks[i];return `<div class="label">${esc(b.code)} · ${esc(b.rateLabel)}${b.stale?'<span class="stale">STALE</span>':''}</div>
+ <div class="kr"><div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span>${esc(b.lastMoveDetail)}</span></div>
+ <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span> · ${esc(b.nextLabel)}</span></div>
+ ${b.market?`<div><span class="label">Market</span><span>${esc(b.market)}</span></div>`:''}
+ ${b.sub?`<div><span class="label">Other</span><span>${esc(b.sub)}</span></div>`:''}</div>
+ <div class="kfoot2"><span>SRC ${esc(b.source.name).toUpperCase()}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>`}
 setInterval(()=>document.querySelectorAll('.t-minus').forEach(e=>e.textContent=tminus(e.dataset.n)),30000);
 
 /* ---------- offline mode (Tube): service worker keeps the last brief ---------- */
@@ -411,7 +516,7 @@ function render(){
  $('#feed').innerHTML=list.length?list.map(s=>{const c=conf(s.confidence),[pl,pc]=isRel(s)?['OFFICIAL','p2']:prec(s.sourceCount);return `<article class="story" id="rpt-${s.id}" data-id="${s.id}">
   <div class="idx">RPT-${String(s.id).padStart(4,'0')}</div>
   <div>
-   <div class="meta1"><span class="prec ${pc}">${pl}</span><span class="label">${esc(s.topic)}</span><span class="mono">${ago(s.updatedAt)}</span></div>
+   <div class="meta1"><span class="prec ${pc}">${pl}</span><span class="label">${esc(s.topic)}</span><span class="mono">${ago(s.updatedAt)}</span><span class="chev" aria-hidden="true"></span></div>
    <h2>${esc(s.headline)}</h2>
    <p class="bluf"><b>BLUF</b>${esc(s.summary)}</p>
    ${s.analysis?`<p class="take"><b>RECON TAKE</b>${esc(s.analysis.thesis)}</p>`:''}
@@ -471,16 +576,19 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDat
 function openReport(id){
  if(topic!=='ALL'){topic='ALL';render()}
  const st=document.getElementById('rpt-'+id);if(!st)return;
- st.classList.add('open');const g=st.querySelector('.tog');if(g)g.setAttribute('aria-expanded','true');
+ st.classList.add('open','ex');const g=st.querySelector('.tog');if(g)g.setAttribute('aria-expanded','true');
  st.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
 }
 function openHash(){const m=/^#rpt-(\d+)$/.exec(location.hash);if(m)openReport(+m[1])}
 addEventListener('hashchange',openHash);
 
 /* ---------- interaction ---------- */
+const MOB=()=>matchMedia('(max-width:860px)').matches;
 document.addEventListener('click',e=>{
  const t=e.target.closest('#ao button');if(t){if(t.dataset.t===topic)return;topic=t.dataset.t;SFX.select();renderAo();swap(render);return}
+ const kp=e.target.closest('.kpi');if(kp&&MOB()&&!e.target.closest('a')){const i=+kp.dataset.i,kd=$('#kdet'),same=kd.dataset.i==i&&kd.classList.contains('on');document.querySelectorAll('.kpi').forEach(x=>x.classList.remove('sel'));if(same){kd.classList.remove('on');SFX.close()}else{kd.dataset.i=i;kd.innerHTML=kpiDetail(i);kd.classList.add('on');kp.classList.add('sel');SFX.open()}return}
  const g=e.target.closest('.tog');if(g){const st=g.closest('.story');const o=st.classList.toggle('open');g.setAttribute('aria-expanded',o);o?SFX.open():SFX.close();return}
+ const sc=e.target.closest('.story');if(sc&&MOB()&&!e.target.closest('.det,.tog,a,button')){const o=sc.classList.toggle('ex');o?SFX.open():SFX.close();return}
  const rp=e.target.closest('[data-rpt]');if(rp){SFX.click();openReport(+rp.dataset.rpt);return}
  if(e.target.closest('.srcs a,.kfoot a'))SFX.click();
 });
@@ -501,6 +609,13 @@ function subscribedBanner(){if(location.hash==='#subscribed'){$('#msg').classNam
 subscribedBanner();addEventListener('hashchange',subscribedBanner);
 fetch(STORIES_URL).then(r=>r.json()).then(async d=>{GEN=d.generatedAt||'';ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};paintUpd();render();openHash();await bootP;scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0})}).catch(()=>{$('#feed').innerHTML='<div class="empty">Feed offline.</div>'});
 fetch(RATES_URL).then(r=>r.json()).then(async d=>{RATES=d;renderRates();await bootP;scrambleIn($('#kpis'),{dur:800,step:0})}).catch(()=>{$('#kpis').innerHTML='<div class="empty" style="grid-column:1/-1">Rate data unavailable.</div>'});
+
+/* mobile: sticky sector strip sits under the header; subscribe bar hides once the real form is on screen */
+(function(){const bar=document.querySelector('.bar'),sb=document.getElementById('subbar'),sub=document.querySelector('.sub');
+ const setH=()=>document.documentElement.style.setProperty('--barh',bar.offsetHeight+'px');setH();addEventListener('resize',setH);
+ let seen=false;const upd=()=>{const r=sub.getBoundingClientRect(),vis=r.top<innerHeight-40;sb.classList.toggle('off',vis||scrollY<300)};
+ addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();
+ document.getElementById('subgo').addEventListener('click',()=>{sub.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>document.getElementById('em').focus({preventScroll:true}),500)})})();
 </script>
 </body>
 </html>
