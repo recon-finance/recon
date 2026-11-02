@@ -153,10 +153,10 @@ var require_sources = __commonJS({
     var SOURCES = cfg.publishers;
     module2.exports = SOURCES;
     module2.exports.MIN_FULL = +(process.env.MIN_FULL_SOURCES || cfg.minFullSources || 1);
-    module2.exports.FINANCE_RE = /\b(econom\w*|inflation|interest rates?|central bank|fed|federal reserve|bank of england|ecb|gdp|recession|tariffs?|trade|markets?|stocks?|shares|bonds?|gilts?|yields?|oil|currency|sterling|dollar|euro|mortgages?|housing|jobs|unemployment|wages?|budget|tax|debt|banks?|banking|earnings|ipo|merger|crypto|bitcoin|ftse|lender|insurer|results|profits?|spending|borrowing|fiscal|monetary|growth|stamp duty|pension|savings)\b/i;
+    module2.exports.FINANCE_RE = /\b(econom\w*|inflation|interest rates?|central bank|fed|federal reserve|bank of england|ecb|gdp|recession|tariffs?|trade|markets?|stocks?|shares|bonds?|gilts?|yields?|oil|currency|sterling|dollar|euro|mortgages?|housing|jobs|unemployment|wages?|budget|tax|debt|banks?|banking|earnings|ipo|merger|crypto|bitcoin|ftse|lender|insurer|results|profits?|spending|borrowing|fiscal|monetary|growth|stamp duty|pension|savings|dividends?|buybacks?|profit warnings?|equit(y|ies)|stock markets?|share price|sell-?off|rall(y|ies)|nasdaq|dow jones|stoxx|dax|nikkei|hang seng|trading update|listing)\b/i;
     module2.exports.UK_RE = /\b(uk|u\.k\.|britain|british|england|london|scotland|wales|sterling|gilts?|ftse|bank of england|boe|bailey|mpc|labour|chancellor|reeves|ons|hmrc|fca|pra|barclays|lloyds|hsbc|natwest|nationwide|santander uk|standard chartered|london stock exchange|city of london|autumn budget|stamp duty|isa)\b/i;
-    module2.exports.DRIVERS_RE = /\b(federal reserve|fed|fomc|ecb|tariffs?|brent|opec|treasury yields|wall street|s&p 500|nasdaq|strait of hormuz)\b/i;
-    module2.exports.TOPICS = ["RATES & BOE", "UK ECONOMY", "BANKING", "MARKETS", "PROPERTY", "FISCAL", "ENERGY & TRADE"];
+    module2.exports.DRIVERS_RE = /\b(federal reserve|fed|fomc|ecb|tariffs?|brent|opec|treasury yields|wall street|s&p 500|nasdaq|strait of hormuz|stock markets?|global (stocks|shares|equities)|dow jones|stoxx|dax|nikkei|hang seng|earnings season)\b/i;
+    module2.exports.TOPICS = ["RATES & BOE", "UK ECONOMY", "BANKING", "MARKETS", "STOCKS", "PROPERTY", "FISCAL", "ENERGY & TRADE"];
   }
 });
 
@@ -254,7 +254,7 @@ var require_ingest = __commonJS({
 var require_cluster = __commonJS({
   "lib/cluster.js"(exports2, module2) {
     var crypto = require("crypto");
-    var MIN_SOURCES = +(process.env.MIN_SOURCES || 3);
+    var MIN_SOURCES = +(process.env.MIN_SOURCES || 2);
     var THRESHOLD = +(process.env.SIM_THRESHOLD || 0.28);
     var STOP = new Set("the a an and or of to in on for with at by from as is are was were be been it its this that these those after over amid into than but not has have had will would could says said say new more up down out about us uk".split(" "));
     var tok = (s) => (s.toLowerCase().match(/[a-z0-9£$%.]+/g) || []).map((w) => w.replace(/^\.+|\.+$/g, "")).filter((w) => w.length > 2 && !STOP.has(w));
@@ -286,7 +286,7 @@ var require_cluster = __commonJS({
       });
       return s;
     };
-    function cluster(arts, th = THRESHOLD) {
+    function cluster(arts, th = THRESHOLD, min = MIN_SOURCES) {
       const vecs = vectorise(arts);
       const parent = arts.map((_, i) => i);
       const find = (i) => parent[i] === i ? i : parent[i] = find(parent[i]);
@@ -304,18 +304,22 @@ var require_cluster = __commonJS({
           if (!by.has(a.source)) by.set(a.source, a);
         });
         return [...by.values()];
-      }).filter((g) => g.length >= MIN_SOURCES).map((g) => ({ articles: g, key: crypto.createHash("sha1").update(g.map((a) => a.url).sort()[0]).digest("hex").slice(0, 16) })).sort((a, b) => b.articles.length - a.articles.length);
+      }).filter((g) => g.length >= min).map((g) => ({ articles: g, key: crypto.createHash("sha1").update(g.map((a) => a.url).sort()[0]).digest("hex").slice(0, 16) })).sort((a, b) => b.articles.length - a.articles.length);
     }
     function clusterAdaptive(arts, target = +(process.env.MIN_STORIES_TARGET || 4)) {
       let best = { clusters: [], th: THRESHOLD };
-      for (const th of [THRESHOLD, 0.23, 0.19]) {
+      for (const th of [THRESHOLD, 0.23]) {
         const c = cluster(arts, th);
         if (c.length > best.clusters.length || th === THRESHOLD) best = { clusters: c, th };
         if (c.length >= target) break;
       }
       return best;
     }
-    module2.exports = { cluster, clusterAdaptive, MIN_SOURCES };
+    function twoSource(arts, th, taken) {
+      const used = new Set(taken.flatMap((c) => c.articles.map((a) => a.url)));
+      return cluster(arts.filter((a) => !used.has(a.url)), th, 2).filter((c) => c.articles.length === 2).map((c) => ({ ...c, provisional: true }));
+    }
+    module2.exports = { cluster, clusterAdaptive, twoSource, MIN_SOURCES };
   }
 });
 
@@ -533,21 +537,21 @@ var require_synthesise = __commonJS({
     var { cleanAssessment, allPresent } = require_verify();
     var { MIN_FULL } = require_sources();
     var SYSTEM = `You are the analyst desk of RECON, a UK-focused economics, banking and markets briefing read by bankers, analysts and investors. Readers are intermediate-to-expert: do not explain basics; give the detail and the numbers.
-You receive 3+ items from different sources, supposedly about the SAME event, numbered [1], [2], ...
+You receive 2+ items from different sources, supposedly about the SAME event, numbered [1], [2], ...
 Source policy: items marked PRIMARY include full text of a public/primary source and are the basis for all detail. Items marked CORROBORATION are third-party outlets for which we hold only a headline and a short feed description: use them only to corroborate facts and to note agreement or differences, never copy their wording, and never use them to add detail that no PRIMARY item contains.
 Write ONE corroborated report using ONLY facts stated in the articles.
 
 Hard rules:
-- If the articles are NOT about the same event, or fewer than 3 clearly corroborate it, return {"same_event": false}.
+- If the articles are NOT about the same event, or fewer than 2 outlets clearly corroborate it, return {"same_event": false}.
 - Every number, date, name, vote count and quote-like claim must appear in the provided text. NEVER compute derived figures (differences, percentage changes, averages) and never estimate or round differently. If a figure is not in the text, leave it out.
 - Attribute with inline source markers, e.g. "... voted 6-3 to hold [1][3]". Put them at the end of the sentence.
 - Do not copy phrasing from the articles; paraphrase. No direct quotes.
 - Where outlets differ on a fact or framing, say so in "compare" and name the outlets by marker.
 - No speculation, no opinion, no advice here. (Opinion lives in a separate step.)
 - Depth: aim for roughly 600-900 words across the assessment sections when the sources contain that much detail. Never pad. If the sources are thin, write less.
-- Topic must be one of: ${TOPICS.join(" | ")}.
-- uk_relevance: 5 = about the UK economy, UK banks, FTSE or the Bank of England; 3 = overseas event with a UK impact stated in the articles; 1-2 = no real UK angle.
-- confidence: HIGH = sources agree on the core facts; MEDIUM = minor differences; LOW = material conflict or thin detail.
+- Topic must be one of: ${TOPICS.join(" | ")}. STOCKS = equity markets (FTSE indices, Wall Street, individual listed companies: results, profit warnings, dividends, buybacks, M&A, IPOs, analyst moves). MARKETS = gilts, sterling and other FX, commodities, credit.
+- uk_relevance: 5 = about the UK economy, UK banks, FTSE or FTSE-listed companies or the Bank of England; 3 = overseas event with a UK impact stated in the articles; 1-2 = no real UK angle.
+- confidence: HIGH = three or more sources agree on the core facts (with only two sources, never above MEDIUM); MEDIUM = minor differences; LOW = material conflict or thin detail.
 
 Return ONLY JSON:
 {"same_event":true,"uk_relevance":1-5,"topic":"...","headline":"<=80 chars","summary":"<=50 words: the bottom line up front","key_points":["3-4 bullets, <=14 words each"],"why_it_matters":"<=35 words, the UK angle (gilts, sterling, FTSE, banks, mortgages, Bank Rate)","confidence":"HIGH|MEDIUM|LOW","disagreements":["short, optional"],
@@ -688,9 +692,12 @@ var require_releases = __commonJS({
     var { fillFullText } = require_fulltext();
     var { cleanAssessment, allPresent } = require_verify();
     var { TOPICS } = require_sources();
+    var NOISE = /\b(administration|administrators?|insolven\w*|liquidat\w*|winding[- ]up|final notice|fined?|fines|warning list|clone firm|scam|overseas pension|qrops|rops|self assessment|guidance for|how to|help with|campaign|apprentice\w*|consultation (outcome|response)|call for input|webinar|appointment of|board member|annual report and accounts|freedom of information|transparency data|spending over|corporate (plan|report)|diversity|research (note|paper)|enforcement|prohibition|ban(s|ned)? |ltd|limited|plc|llp|wind[- ]down|suspend\w*|restrictions? on|charged|convicted|jailed|sentenced|court|tribunal|dispute|mis-?selling|complaints data|reminder|deadline|pension schemes?|scheme members?|trust(ee)?s?|charit\w+|fraud\w*|money laundering|sanctions? list|authori[sz]ation|permission|register)\b/i;
+    var MOVER = /\b(interest rates?|bank rate|inflation|cpi|gdp|growth|unemployment|labour market|wages?|budget|spring statement|autumn statement|fiscal|gilts?|borrowing|tax (rise|cut|rates?|changes?)|stamp duty|capital gains|inheritance tax|national insurance|income tax|corporation tax|vat|mortgage\w*|bank(s|ing)? (capital|rules|ring-?fenc\w*)|capital requirements?|stress test|ring-?fenc\w*|consumer duty|motor finance|redress|merger|takeover|competition (probe|investigation)|market study|price cap|energy price|ofgem|pensions? (reform|review)|financial stability|systemic|stablecoin)\b/i;
+    var STRICT = /* @__PURE__ */ new Set(["FCA", "HMRC", "CMA"]);
     var PRIORITY = ["ONS", "OBR", "Bank of England", "HM Treasury", "FCA", "HMRC", "CMA", "Federal Reserve", "ECB"];
-    var PER_SOURCE = +(process.env.RELEASES_PER_SOURCE || 3);
-    var MAX = +(process.env.MAX_RELEASES || 10);
+    var PER_SOURCE = +(process.env.RELEASES_PER_SOURCE || 2);
+    var MAX = +(process.env.MAX_RELEASES || 6);
     var WINDOW_H = +(process.env.RELEASE_WINDOW_HOURS || 48);
     var SYSTEM = `You are the analyst desk of RECON, a UK-focused economics, banking and markets briefing for finance professionals (intermediate to expert: no basics, give the detail and the numbers).
 You receive ONE official publication (full text) from a primary source: a statistics release, fiscal forecast, central-bank statement, regulator notice or Treasury publication.
@@ -701,7 +708,7 @@ Hard rules:
 - Paraphrase; no direct quotes; add inline marker [1] at the end of sentences (there is a single source).
 - No speculation, opinion or advice here (opinion lives in a separate step).
 - Depth: roughly 250-600 words across the assessment sections depending on how much the document contains. Never pad.
-- If the publication is not about economics, finance, banking, markets, tax or fiscal/monetary policy, or has no UK relevance (uk_relevance < 3 and not a Fed/ECB item that matters to UK rates), return {"skip":true}.
+- MATERIALITY: readers are bankers and investors who want news that moves rates, markets, bank earnings, tax or regulation across the sector. Return {"skip":true} for anything routine or narrow: individual firms or people, insolvencies, enforcement or fines, pension-scheme admin, guidance, consultations without a decision, speeches without new policy, or anything with no UK relevance (uk_relevance < 3 and not a Fed/ECB item that matters to UK rates). When in doubt, skip.
 - topic must be one of: ${TOPICS.join(" | ")}.
 Return ONLY JSON:
 {"skip":false,"uk_relevance":1-5,"topic":"...","headline":"<=80 chars, plain statement of the news","summary":"<=50 words, bottom line up front","key_points":["3-4 bullets <=14 words"],"why_it_matters":"<=35 words, the UK angle","assessment":{"situation":["1-3 paragraphs: what was published, the headline figures, what changed"],"numbers":[{"label":"...","value":"exactly as written","source":1,"context":"<=14 words"}],"background":["0-2 paragraphs of context from the document"],"market_reaction":[],"compare":[],"watch":[{"when":"date as written","what":"next step, release or decision mentioned in the document"}]}}
@@ -709,6 +716,13 @@ Up to 10 rows in "numbers", most decision-relevant first.`;
     var hash = (u) => "rel-" + crypto.createHash("sha1").update(u).digest("hex").slice(0, 16);
     async function runReleases() {
       if (process.env.DEMO === "1" || !llm.configured()) return 0;
+      for (const r of db2.prepare("SELECT id, sources FROM stories WHERE kind='RELEASE'").all()) {
+        try {
+          const x = JSON.parse(r.sources)[0];
+          if (NOISE.test(x.title) || STRICT.has(x.name) && !MOVER.test(x.title)) db2.prepare("DELETE FROM stories WHERE id=?").run(r.id);
+        } catch {
+        }
+      }
       const since = new Date(Date.now() - WINDOW_H * 36e5).toISOString();
       const rows = db2.prepare(`SELECT * FROM articles WHERE tier='full' AND published_at >= ? ORDER BY published_at DESC`).all(since);
       const inStory = db2.prepare(`SELECT 1 FROM stories WHERE sources LIKE ?`), seen = db2.prepare("SELECT 1 FROM release_seen WHERE url=?");
@@ -719,6 +733,10 @@ Up to 10 rows in "numbers", most decision-relevant first.`;
       };
       const perSrc = {}, picked = [];
       for (const a of rows.sort((x, y) => rank(x.source) - rank(y.source) || y.published_at.localeCompare(x.published_at))) {
+        if (NOISE.test(a.title) || STRICT.has(a.source) && !MOVER.test(a.title)) {
+          if (!seen.get(a.url)) mark(a.url, "not-material");
+          continue;
+        }
         if (picked.length >= MAX || (perSrc[a.source] || 0) >= PER_SOURCE) continue;
         if (seen.get(a.url) || inStory.get("%" + a.url + "%")) continue;
         perSrc[a.source] = (perSrc[a.source] || 0) + 1;
@@ -791,15 +809,19 @@ var require_pipeline = __commonJS({
         used.hours = h;
         if (clusters.length >= +(process.env.MIN_STORIES_TARGET || 4)) break;
       }
-      console.log(`[pipeline] ${arts.length} articles (last ${used.hours}h) -> ${clusters.length} corroborated clusters (similarity ${used.th})`);
+      console.log(`[pipeline] ${arts.length} articles (last ${used.hours}h) -> ${clusters.length} clusters (>=${require_cluster().MIN_SOURCES} outlets; similarity ${used.th})`);
+      const outs = [];
       const bySrc = {};
       arts.forEach((a) => {
         bySrc[a.source] = (bySrc[a.source] || 0) + 1;
       });
-      try {
-        db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('status', ?)").run(JSON.stringify({ at: (/* @__PURE__ */ new Date()).toISOString(), windowHours: used.hours, similarity: used.th, articles: arts.length, clusters: clusters.length, clusterSizes: clusters.map((c) => c.articles.length), articlesBySource: bySrc, feeds: ing.stats || [] }));
-      } catch {
-      }
+      const saveStatus = () => {
+        try {
+          db2.prepare("INSERT OR REPLACE INTO meta (key,value) VALUES ('status', ?)").run(JSON.stringify({ at: (/* @__PURE__ */ new Date()).toISOString(), windowHours: used.hours, similarity: used.th, articles: arts.length, clusters: clusters.length, clusterSizes: clusters.map((c) => c.articles.length), articlesBySource: bySrc, feeds: ing.stats || [], outcomes: outs }));
+        } catch {
+        }
+      };
+      saveStatus();
       const findExisting = db2.prepare(`SELECT id, source_count FROM stories WHERE sources LIKE ?`);
       const cols = "topic,headline,summary,key_points,why_it_matters,disagreements,confidence,sources,source_count,assessment,read_mins";
       const ins = db2.prepare(`INSERT INTO stories (cluster_key,${cols}) VALUES (?,${cols.split(",").map(() => "?").join(",")})`);
@@ -811,13 +833,26 @@ var require_pipeline = __commonJS({
           existing = findExisting.get("%" + a.url + "%");
           if (existing) break;
         }
-        if (existing && c.articles.length - existing.source_count < +(process.env.RESYNTH_MIN_GROWTH || 1)) continue;
+        const label = `${c.articles.length} outlets: ${c.articles[0].title.slice(0, 70)}`;
+        if (existing && c.articles.length - existing.source_count < +(process.env.RESYNTH_MIN_GROWTH || 1)) {
+          outs.push(label + " \u2192 already published");
+          continue;
+        }
         try {
           await fillFullText(c.articles);
           const s = await synthesise(c.articles);
-          if (!s) continue;
+          if (!s) {
+            outs.push(label + " \u2192 no result");
+            continue;
+          }
+          if (s.same_event === false) {
+            outs.push(label + " \u2192 sources were different events");
+            continue;
+          }
+          if (c.articles.length < 3 && s.confidence === "HIGH") s.confidence = "MEDIUM";
           if (s.uk_relevance != null && s.uk_relevance < 3) {
             console.log("  - skipped (low UK relevance):", s.headline);
+            outs.push(label + " \u2192 skipped, low UK relevance");
             continue;
           }
           const A = s.assessment, mins = A ? Math.max(1, Math.round(A.words / 200)) : null;
@@ -833,11 +868,14 @@ var require_pipeline = __commonJS({
             id = ins.run(c.key, ...vals).lastInsertRowid;
           }
           touched.push(+id);
+          outs.push(label + " \u2192 published");
         } catch (e) {
           console.log("  ! synth failed:", e.message);
+          outs.push(label + " \u2192 AI step failed: " + String(e.message).slice(0, 100));
         }
       }
       console.log(`[pipeline] ${touched.length} reports written/updated`);
+      saveStatus();
       await runReleases().catch((e) => console.log("  ! releases failed:", e.message));
       const pending = db2.prepare(`SELECT id FROM stories WHERE analysis IS NULL AND updated_at >= datetime('now','-72 hours')`).all().map((r) => r.id);
       if (process.env.DEMO !== "1" && require_llm().configured()) {
@@ -1670,7 +1708,7 @@ var require_build_site = __commonJS({
         const e = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
         const rows = st ? [...st.feeds].sort((a, b) => a.ok - b.ok || a.name.localeCompare(b.name)).map((f) => `<tr><td>${f.ok ? "OK" : "<b>FAIL</b>"}</td><td>${e(f.name)}</td><td>${f.items}</td><td>${e(f.error || f.note || "")}</td></tr>`).join("") : "";
         const by = st ? Object.entries(st.articlesBySource).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${e(k)} ${v}`).join(" \xB7 ") : "";
-        fs.writeFileSync(path.join(out, "status.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON status</title><style>body{background:#000;color:#ccc;font:13px ui-monospace,monospace;padding:24px;max-width:1100px;margin:auto}td,th{padding:4px 12px 4px 0;text-align:left;vertical-align:top}b{color:#fff}h1{font-size:15px;color:#fff}</style><h1>RECON \xB7 pipeline status</h1>${st ? `<p>Last run ${e(st.at)}<br>Looked back ${st.windowHours}h \xB7 ${st.articles} articles \xB7 ${st.clusters} corroborated stories (sizes ${st.clusterSizes.join(", ") || "none"}) \xB7 similarity ${st.similarity}</p><p>Articles per outlet: ${by || "none"}</p><table><tr><th>State<th>Feed<th>Items kept<th>Note</tr>${rows}</table>` : "<p>No run recorded yet.</p>"}`);
+        fs.writeFileSync(path.join(out, "status.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON status</title><style>body{background:#000;color:#ccc;font:13px ui-monospace,monospace;padding:24px;max-width:1100px;margin:auto}td,th{padding:4px 12px 4px 0;text-align:left;vertical-align:top}b{color:#fff}h1{font-size:15px;color:#fff}</style><h1>RECON \xB7 pipeline status</h1>${st ? `<p>Last run ${e(st.at)}<br>Looked back ${st.windowHours}h \xB7 ${st.articles} articles \xB7 ${st.clusters} corroborated stories (sizes ${st.clusterSizes.join(", ") || "none"}) \xB7 similarity ${st.similarity}</p><p>Articles per outlet: ${by || "none"}</p><p><b>What happened to each candidate story</b><br>${(st.outcomes || []).map(e).join("<br>") || "none"}</p><p><b>Story candidates</b><br>${(st.outcomes || []).map(e).join("<br>") || "none formed"}</p><table><tr><th>State<th>Feed<th>Items kept<th>Note</tr>${rows}</table>` : "<p>No run recorded yet.</p>"}`);
       } catch (err) {
         console.log("[site] status page skipped:", err.message);
       }

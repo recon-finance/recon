@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RECON · UK Economics, Banking & Markets Brief</title>
-<meta name="description" content="RECON: the UK morning brief on economics, banking and markets. AI-compiled from 3+ independent sources, every source linked.">
+<meta name="description" content="RECON: the UK morning brief on economics, banking and markets. AI-compiled from 2+ independent sources, every source linked.">
 <meta name="theme-color" content="#000000">
 <style>
 :root{--bg:#000;--ink:#f2f2f2;--sub:#b3b3b3;--mute:#7a7a7a;--line:#242424;--line2:#3a3a3a;--panel:#0a0a0a;
@@ -217,7 +217,7 @@ footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px soli
  </aside>
  <main>
   <div class="label">UK situation report</div>
-  <h1>UK economics, banking and markets. Confirmed by three or more sources.</h1>
+  <h1>UK economics, banking and markets. Confirmed by two or more sources.</h1>
   <p class="lede">Your morning brief for the commute. Corroborated reports from independent outlets, plus the day's official releases from ONS, OBR, the Treasury, the Bank of England and more. Every source linked.</p>
 
   <div class="sec"><span class="label">§1 · Policy rates</span></div>
@@ -363,10 +363,10 @@ const swap=async fn=>{ // used for every content change: corrupt -> re-render ->
 let ALL=[],TOPICS=[],topic='ALL',EVENTS={},GEN='';
 function ago(iso){const m=Math.max(1,Math.round((Date.now()-new Date(iso))/6e4));return m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'}
 const conf=c=>({HIGH:3,MEDIUM:2,LOW:1}[c]||2);
-const LBL={'RATES & BOE':'Rates & BoE','UK ECONOMY':'UK economy','BANKING':'Banking','MARKETS':'Markets & stocks','PROPERTY':'Property & mortgages','FISCAL':'Fiscal & policy','ENERGY & TRADE':'Energy & trade'};
+const LBL={'RATES & BOE':'Rates & BoE','UK ECONOMY':'UK economy','BANKING':'Banking','MARKETS':'Gilts, FX & commodities','STOCKS':'Stocks & equities','PROPERTY':'Property & mortgages','FISCAL':'Fiscal & policy','ENERGY & TRADE':'Energy & trade'};
 const cap=t=>LBL[t]||(t.charAt(0)+t.slice(1).toLowerCase());
 const tubeMins=l=>Math.max(1,Math.round(l.reduce((n,s)=>n+[s.headline,s.summary,s.whyItMatters,...s.keyPoints].join(' ').split(/\s+/).length,0)/200));
-const prec=n=>n>=6?['FLASH','p2']:n>=4?['PRIORITY','p1']:['ROUTINE',''];
+const prec=n=>n<3?['PRELIMINARY','']:n>=6?['FLASH','p2']:n>=4?['PRIORITY','p1']:['ROUTINE',''];
 const para=(t,src)=>`<p>${esc(t).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</p>`;
 const evLabel=id=>{const e=EVENTS[id];if(!e)return id;const d=new Date(e.date);return `${p2(d.getUTCDate())} ${MON[d.getUTCMonth()]} · ${e.label}`};
 const asmWords=a=>a?a.words:0;
@@ -421,7 +421,7 @@ function render(){
     <button class="tog" aria-expanded="false">${s.assessment&&s.assessment.situation&&s.assessment.situation.length?'Assessment'+(s.readMins?' · '+s.readMins+' min':''):'Details'}</button>
    </div>
    <div class="det br">${detail(s)}</div>
-  </div></article>`}).join(''):`<div class="empty">No corroborated reporting in this sector. Reports are published once three or more outlets confirm the same event.</div>`;
+  </div></article>`}).join(''):`<div class="empty">No corroborated reporting in this sector. Reports are published once two or more outlets confirm the same event.</div>`;
 }
 
 /* ---------- daily poll ---------- */

@@ -339,6 +339,20 @@
       "core": true
     },
     {
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com/business/stock-markets/rss",
+      "tier": "snippet",
+      "enabled": true,
+      "licence": {
+        "type": "Publisher RSS feed",
+        "status": "snippet-only",
+        "basis": "Headline + short feed description only, linked back to the source. Never fetched in full, never rewritten at length.",
+        "checkedOn": "2026-11-01"
+      },
+      "uk": true,
+      "core": true
+    },
+    {
       "name": "City AM",
       "url": "https://www.cityam.com/feed/",
       "tier": "snippet",
