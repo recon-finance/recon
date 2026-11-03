@@ -1382,7 +1382,7 @@ var require_buttondown = __commonJS({
     function briefDue(now = /* @__PURE__ */ new Date()) {
       const l = londonNow(now), last = db2.prepare("SELECT value FROM meta WHERE key='last_brief_day'").get();
       if (process.env.BRIEF_WEEKDAYS_ONLY === "1" && ["Sat", "Sun"].includes(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now))) return false;
-      return l.hour >= 6 && (!last || last.value !== l.day);
+      return l.hour >= 5 && (!last || last.value !== l.day);
     }
     function sevenAmLondon(now = /* @__PURE__ */ new Date()) {
       const l = londonNow(now);
@@ -1541,7 +1541,7 @@ Return ONLY JSON: {"question":"...","story_id":<id from the list>}`;
     var bad = (q, ctx, ids, j) => !q || q.length > 140 || !/\?$/.test(q) || !ids.includes(+j.story_id) || !allPresent(q, ctx);
     async function ensureDailyPoll(now = /* @__PURE__ */ new Date()) {
       const l = londonNow(now);
-      if (l.hour < 6) return null;
+      if (l.hour < 5) return null;
       if (db2.prepare("SELECT 1 FROM polls WHERE id=?").get(l.day)) return null;
       const sel = nl2.storiesFor([]);
       if (!sel.all.length) return null;

@@ -1,9 +1,9 @@
-# Runs RECON for free on GitHub (public repository): every hour 05:10-20:10 UTC it fetches news, writes reports,
-# sends the daily brief (once, from 07:00 UK time) and republishes the website to GitHub Pages.
+# Runs RECON for free on GitHub (public repository): at 06:10, 10:10, 14:10 and 18:10 UK time it fetches news, writes reports,
+# schedules the daily brief for 07:00 UK time and republishes the website to GitHub Pages.
 name: RECON
 on:
   schedule:
-    - cron: '10 5-20 * * *'
+    - cron: '10 5,6,9,10,13,14,17,18 * * *'
   workflow_dispatch:
 concurrency:
   group: recon
@@ -13,7 +13,18 @@ permissions:
   pages: write
   id-token: write
 jobs:
+  gate:   # GitHub schedules in UTC; this keeps the run at 06:10, 10:10, 14:10 and 18:10 UK time all year (the other UTC slots exit here, costing nothing)
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.g.outputs.go }}
+    steps:
+      - id: g
+        run: |
+          H=$(TZ=Europe/London date +%H)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || echo "06 10 14 18" | grep -qw "$H"; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "go=false" >> "$GITHUB_OUTPUT"; fi
   run:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     environment:
@@ -52,6 +63,9 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           LLM_MIN_INTERVAL_MS: ${{ vars.LLM_MIN_INTERVAL_MS }}
           MAX_LLM_CALLS_PER_DAY: ${{ vars.MAX_LLM_CALLS_PER_DAY }}
+          POLL_API: ${{ vars.POLL_API }}
+          RECON_VARS: ${{ toJSON(vars) }}
+          RECON_SECRETS: ${{ toJSON(secrets) }}
         run: node recon-run.js
       - name: Save data for the next run
         run: |
