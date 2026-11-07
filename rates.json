@@ -1,0 +1,67 @@
+{
+  "asOf": "2026-11-07",
+  "note": "Rates auto-updated every run from official sources (BoE IADB, ECB Data Portal, FRED/Federal Reserve). Next-meeting dates come from calendar.json; market pricing from rateprobability.com when available.",
+  "banks": [
+    {
+      "id": "boe",
+      "code": "BOE",
+      "name": "Bank of England",
+      "rateLabel": "Bank Rate",
+      "rate": "4.00",
+      "unit": "%",
+      "sub": "",
+      "lastMove": "HIKE",
+      "lastMoveDetail": "+25bp to 4.00% on 5 Nov 2026",
+      "next": "2026-12-17T12:00:00Z",
+      "nextLabel": "17 DEC",
+      "source": {
+        "name": "Bank of England",
+        "url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate"
+      },
+      "rateNum": 4,
+      "stale": false,
+      "officialAt": "2026-11-07T11:41:38.012Z",
+      "officialAsAt": "2026-11-05"
+    },
+    {
+      "id": "ecb",
+      "code": "ECB",
+      "name": "European Central Bank",
+      "rateLabel": "Deposit facility",
+      "rate": "2.50",
+      "unit": "%",
+      "sub": "MRO 2.65% · MLF 2.90%",
+      "lastMove": "HOLD",
+      "lastMoveDetail": "Held 29 Oct, unanimous · last move +25bp, Sep",
+      "next": "2026-12-17T13:15:00Z",
+      "nextLabel": "17 DEC",
+      "source": {
+        "name": "ECB",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html"
+      },
+      "rateNum": 2.5,
+      "stale": true
+    },
+    {
+      "id": "fed",
+      "code": "FED",
+      "name": "US Federal Reserve",
+      "rateLabel": "Target range",
+      "rate": "3.75–4.00",
+      "unit": "%",
+      "sub": "IORB 3.90%",
+      "lastMove": "HOLD",
+      "lastMoveDetail": "Unchanged since 17 Sep 2026 (last move +25bp)",
+      "next": "2026-12-09T19:00:00Z",
+      "nextLabel": "09 DEC",
+      "source": {
+        "name": "Federal Reserve",
+        "url": "https://www.federalreserve.gov/monetarypolicy/files/monetary20261028a1.pdf"
+      },
+      "rateNum": 4,
+      "stale": false,
+      "officialAt": "2026-11-07T11:41:38.012Z",
+      "officialAsAt": "2026-11-06"
+    }
+  ]
+}
