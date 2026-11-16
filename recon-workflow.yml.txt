@@ -67,15 +67,33 @@ jobs:
           RECON_VARS: ${{ toJSON(vars) }}
           RECON_SECRETS: ${{ toJSON(secrets) }}
         run: node recon-run.js
+      - name: Build Instagram slides and Reel (never blocks the website)
+        continue-on-error: true
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          RECON_VARS: ${{ toJSON(vars) }}
+        run: |
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+          node recon-social.js build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Post to Instagram (only when IG_ENABLED=1; a red run means a post failed)
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          RECON_VARS: ${{ toJSON(vars) }}
+        run: node recon-social.js publish
       - name: Save data for the next run
+        if: ${{ always() }}
         run: |
           rm -rf /tmp/state && mkdir /tmp/state
           cp data/margin.db data/rates.json /tmp/state/
           cd /tmp/state && git init -q && git checkout -q -b data && git add -A
           git -c user.name=recon-bot -c user.email=recon-bot@users.noreply.github.com commit -qm "state $(date -u +%FT%TZ)"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: dist }
-      - id: deployment
-        uses: actions/deploy-pages@v4

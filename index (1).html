@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RECON · UK Market Intelligence</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="RECON: UK market intelligence. Open-source reconnaissance on rates, banks and markets, cross-checked across independent outlets, every source linked.">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#000;--ink:#f2f2f2;--sub:#b3b3b3;--mute:#7a7a7a;--line:#242424;--line2:#3a3a3a;--panel:#0a0a0a;
+ --sans:'Inter','Helvetica Neue',Helvetica,Arial,system-ui,-apple-system,'Segoe UI',sans-serif;
+ --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;letter-spacing:-.003em;
+ background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px}
+a{color:inherit}
+.label{font:500 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--mute);white-space:nowrap}
+
+/* classification strip */
+.cls{background:var(--ink);color:#000;text-align:center;font:600 10px/1 var(--sans);letter-spacing:.28em;padding:6px 10px;text-transform:uppercase}
+
+/* top bar */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(0,0,0,.93);backdrop-filter:blur(8px);z-index:10}
+.brand{display:flex;align-items:center;gap:12px;font:700 15px var(--sans);letter-spacing:.32em}
+.brand img{height:36px;width:auto;display:block}
+.bar .r{display:flex;gap:20px;align-items:center}
+.link::before{content:"";display:inline-block;width:6px;height:6px;background:var(--ink);margin-right:8px;animation:blink 2.4s infinite}
+@keyframes blink{50%{opacity:.15}}
+.snd{all:unset;cursor:pointer;font:500 10px var(--mono);letter-spacing:.14em;color:var(--sub);border:1px solid var(--line2);padding:5px 9px}
+.snd:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+@media(max-width:560px){.bar .hide-s{display:none}.cls{letter-spacing:.14em;font-size:9px}}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1480px;margin:0 auto}
+.rail{padding:36px 28px;border-right:1px solid var(--line);position:sticky;top:78px;align-self:start}
+main{padding:36px 40px 80px;min-width:0}
+@media(max-width:860px){
+ .wrap{grid-template-columns:1fr}
+ .rail{position:static;border-right:0;border-bottom:1px solid var(--line);padding:24px 20px}
+ main{padding:24px 20px 60px}
+ .bar{padding:12px 20px}
+}
+
+/* rail */
+.ao{display:flex;flex-direction:column;margin:14px 0 36px}
+.ao button{all:unset;cursor:pointer;position:relative;display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--sub);transition:color .15s}
+.ao button:hover{color:var(--ink)}
+.ao button.on{color:var(--ink);font-weight:600}
+.ao button.on::before{content:"";position:absolute;left:-16px;top:50%;margin-top:-3px;width:6px;height:6px;background:var(--ink)}
+.ao button span{font-family:var(--mono);font-size:11px;color:var(--mute)}
+@media(max-width:860px){.ao{flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:24px}.ao button{border:1px solid var(--line2);padding:7px 12px}.ao button.on::before{display:none}.ao button.on{background:var(--ink);color:#000}.ao button span{display:none}}
+.sub p{margin:10px 0 14px;font-size:13px;color:var(--sub);line-height:1.5}
+.sub input{width:100%;background:transparent;border:1px solid var(--line2);color:var(--ink);font:14px var(--sans);padding:12px;border-radius:0;margin-bottom:8px}
+.sub input::placeholder{color:var(--mute)}
+.sub input:focus{outline:none;border-color:var(--ink)}
+.go{width:100%;background:var(--ink);color:#000;border:1px solid var(--ink);font:600 12px var(--sans);letter-spacing:.14em;padding:13px;cursor:pointer;transition:background .15s,color .15s}
+.go:hover{background:#000;color:var(--ink)}
+.go:disabled{opacity:.5}
+.msg{font-size:12px;margin-top:10px;min-height:16px;color:var(--sub)}
+.msg.er{color:#fff;text-decoration:underline}
+.fine{font-size:11px;color:var(--mute);margin-top:14px;line-height:1.5}
+
+/* section headings */
+.sec{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+h1{font:600 28px/1.2 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
+.lede{color:var(--sub);margin:0 0 28px}
+
+/* corner-bracket panels */
+.br{--c:var(--sub);background:
+ linear-gradient(var(--c),var(--c)) top left/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) top left/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) top right/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) top right/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) bottom left/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) bottom left/1px 10px no-repeat,
+ linear-gradient(var(--c),var(--c)) bottom right/10px 1px no-repeat,linear-gradient(var(--c),var(--c)) bottom right/1px 10px no-repeat,var(--panel);
+ border:1px solid var(--line)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:36px}
+@media(max-width:980px){.kpis{grid-template-columns:1fr}}
+.kpi{padding:16px 18px;transition:border-color .2s}
+.kpi:hover{--c:var(--ink);border-color:var(--line2)}
+.kh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rl::before{content:" · "}
+.nl::before{content:" · "}
+.kdet{display:none}
+.kv{font:600 38px/1.1 var(--sans);letter-spacing:-.03em;margin:14px 0 2px;white-space:nowrap}
+.kv small{font:500 18px var(--sans);color:var(--sub);margin-left:2px}
+.ksub{font:11px var(--mono);color:var(--mute);min-height:16px}
+.kr{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:7px}
+.kr div{display:grid;grid-template-columns:74px 1fr;gap:8px;font-size:12.5px;color:var(--sub);line-height:1.4}
+.kr .label{padding-top:2px;font-size:10px}
+.tag{display:inline-block;border:1px solid var(--sub);color:var(--ink);padding:1px 6px;font:600 10px var(--mono);letter-spacing:.12em;margin-right:6px}
+.t-minus{font-family:var(--mono);color:var(--ink)}
+.kfoot{display:flex;justify-content:space-between;margin-top:12px;font:10px var(--mono);color:var(--mute)}
+.kfoot a{text-decoration:none;border-bottom:1px solid var(--line2)}
+.kfoot a:hover{color:var(--ink);border-color:var(--ink)}
+.knote{font:10.5px var(--mono);color:var(--mute);margin:-24px 0 36px}
+
+/* stats */
+.stats{display:flex;gap:40px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
+.stat b{display:block;font:600 26px/1.1 var(--sans);letter-spacing:-.02em}
+.stat .label{display:block;margin-top:6px}
+
+/* stories */
+.story{padding:28px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:76px minmax(0,1fr);gap:0 8px}
+.idx{font:500 11px var(--mono);color:var(--mute);padding-top:3px;line-height:1.5}
+.meta1{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.prec{font:600 9.5px var(--mono);letter-spacing:.16em;border:1px solid var(--line2);color:var(--sub);padding:2px 6px}
+.prec.p1{color:var(--ink);border-color:var(--ink)}
+.prec.p2{color:#000;background:var(--ink);border-color:var(--ink)}
+.story h2{font:600 21px/1.3 var(--sans);letter-spacing:-.015em;margin:0 0 10px}
+.bluf{margin:0;color:var(--sub)}
+.bluf b{font:600 11px var(--sans);letter-spacing:.14em;color:var(--ink);margin-right:8px}
+.meta2{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.meta2 > span{display:flex;align-items:center;gap:8px}
+.sq{display:inline-flex;gap:3px}
+.sq i{width:9px;height:9px;border:1px solid var(--sub)}
+.sq i.f{background:var(--ink);border-color:var(--ink)}
+.tog{all:unset;cursor:pointer;font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border-bottom:1px solid var(--line2);padding-bottom:2px;margin-left:auto}
+.tog:hover{border-color:var(--ink)}
+.det{display:none;margin-top:22px;padding:22px}
+.story.open .det{display:block}
+.det h4{margin:0 0 8px;font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.det section+section{margin-top:20px}
+.det ul{margin:0;padding:0;list-style:none}
+.det li{padding:5px 0 5px 18px;position:relative;color:var(--sub)}
+.det li::before{content:"—";position:absolute;left:0;color:var(--mute)}
+.det .why{color:var(--sub)}
+.dissent{border-left:2px solid var(--ink);padding:2px 0 2px 12px;margin-top:6px;color:var(--ink)}
+.take{margin:14px 0 0;padding-left:12px;border-left:2px solid var(--ink);color:var(--ink);font-size:14.5px}
+.take b{display:inline-block;background:var(--ink);color:#000;font:700 9.5px/1 var(--mono);letter-spacing:.14em;padding:3px 6px;margin-right:8px;vertical-align:1px}
+.det{padding:26px 28px}
+.det .prose p{margin:0 0 14px;line-height:1.75;color:#cfcfcf;font-size:15px}
+.cite{font:600 9.5px var(--mono);color:var(--ink);border:1px solid var(--line2);padding:0 3px;margin-left:2px;vertical-align:super;line-height:1;cursor:help}
+.note{font:11px/1.5 var(--mono);color:var(--mute);border:1px dashed var(--line2);padding:8px 10px;margin:0 0 20px}
+table.nums{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 4px}
+table.nums th{font:500 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);text-align:left;padding:6px 8px 6px 0;border-bottom:1px solid var(--line2)}
+table.nums td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.nums td.v{font:600 14px var(--mono);color:var(--ink);white-space:nowrap}
+table.nums td small{display:block;color:var(--mute);font-size:11.5px;margin-top:1px}
+table.nums td.s{font:11px var(--mono);color:var(--mute);width:34px}
+.watch{list-style:none;margin:0;padding:0}
+.watch li{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);color:#cfcfcf}
+.watch li::before{content:none}
+.watch .when{font:600 11px var(--mono);letter-spacing:.06em;color:var(--ink)}
+.rx{margin:30px 0 4px;padding:0 0 18px}
+.rxh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--ink);color:#000;font:700 10px var(--mono);letter-spacing:.18em;padding:8px 14px;margin:-1px -1px 16px}
+.rxh span:last-child{font-weight:500;opacity:.7}
+.rx>*:not(.rxh){margin-left:20px;margin-right:20px}
+.thesis{font:600 19px/1.4 var(--sans);letter-spacing:-.012em;color:#fff;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.chp{all:unset;cursor:pointer;border:1px solid var(--line2);padding:4px 9px;font:11px var(--mono);color:var(--sub);letter-spacing:.04em}
+button.chp:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+span.chp{cursor:default}
+.rxrow{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:14px;font-size:14px;color:#cfcfcf;line-height:1.6}
+.rxrow .label{padding-top:4px}
+.stale{font:600 9px var(--mono);letter-spacing:.12em;border:1px dashed var(--sub);color:var(--sub);padding:1px 5px;margin-left:6px}
+.poll{padding:24px 26px}
+.pmeta2{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pq{font:600 22px/1.35 var(--sans);letter-spacing:-.015em;margin:12px 0 18px;color:#fff}
+.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbtn{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;border:1px solid var(--line2);padding:16px;font:600 13px var(--sans);letter-spacing:.24em;color:var(--ink);transition:background .15s,color .15s,border-color .15s}
+.pbtn:hover{background:var(--ink);color:#000;border-color:var(--ink)}
+.pbtn:disabled{opacity:.5;cursor:default}
+.pbar{display:grid;grid-template-columns:44px minmax(0,1fr) 62px;gap:14px;align-items:center;margin:12px 0}
+.pbar .trk{height:26px;background:var(--line);position:relative;overflow:hidden}
+.pbar .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink);transition:width .8s cubic-bezier(.2,.7,.2,1)}
+.pbar .fill.dim{background:var(--mute)}
+.pbar b{font:600 20px var(--sans);text-align:right;letter-spacing:-.02em}
+.pbar.mine .label{color:var(--ink)}
+.pbar.mine .label::after{content:" ◂";color:var(--ink)}
+.pmeta{margin-top:14px;font-size:10.5px}
+.disc{font:10.5px/1.5 var(--mono);color:var(--mute);margin-top:16px}
+.det section.top ul{margin-bottom:0}
+@media(max-width:560px){.det{padding:20px 16px}.rx>*:not(.rxh){margin-left:14px;margin-right:14px}.rxrow,.watch li{grid-template-columns:1fr;gap:2px}}
+.srcs{display:flex;flex-wrap:wrap;gap:8px}
+.srcs a{text-decoration:none;border:1px solid var(--line2);padding:6px 12px;font-size:13px;color:var(--sub);transition:.15s}
+.srcs a:hover{color:#000;background:var(--ink);border-color:var(--ink)}
+@media(max-width:560px){.story{grid-template-columns:1fr}.idx{margin-bottom:6px}.tog{margin-left:0}.stats{gap:28px}}
+.empty{padding:60px 0;color:var(--mute);border-bottom:1px solid var(--line)}
+.eor{text-align:center;font:10px var(--mono);letter-spacing:.3em;color:var(--mute);padding:28px 0 0}
+footer{max-width:1480px;margin:0 auto;padding:24px 28px 40px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;line-height:1.6}
+.cls.bot{margin-top:0}
+
+/* scramble transition */
+#fw{position:relative}
+.scan{position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9) 25%,rgba(255,255,255,.9) 75%,transparent);box-shadow:0 0 9px 1px rgba(255,255,255,.16);opacity:0;pointer-events:none;z-index:5}
+.scan.go{animation:sweep var(--sd,1s) cubic-bezier(.4,0,.2,1) forwards}
+@keyframes sweep{0%{top:0;opacity:0}8%{opacity:.9}92%{opacity:.9}100%{top:100%;opacity:0}}
+.scr{font-variant-ligatures:none}
+/* boot overlay */
+#boot{position:fixed;inset:0;background:#000;z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+#boot pre{font:12px/1.9 var(--mono);color:var(--sub);margin:0;letter-spacing:.08em}
+#boot.off{opacity:0;pointer-events:none}
+
+/* ---------- MOBILE ---------- one thing per screen: a compact rates strip (tap a card for its detail), a swipe strip of sectors,
+   and report cards that show headline + two lines, expanding on tap (progressive disclosure) instead of a wall of text. Colours, fonts and sounds are unchanged. */
+.lede .l-short{display:none}
+@media(max-width:860px){
+ html{scroll-padding-top:calc(var(--barh,52px) + 56px)}
+ *{-webkit-tap-highlight-color:transparent}
+ .wrap{display:flex;flex-direction:column}
+ .rail{display:contents}
+ .rail>.label{display:none}
+ .bar{padding:10px 16px}
+ .ao{order:0;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0;padding:9px 16px;position:sticky;top:var(--barh,52px);z-index:9;background:rgba(0,0,0,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .ao::-webkit-scrollbar{display:none}
+ .ao button{flex:0 0 auto;white-space:nowrap;min-height:40px;display:flex;align-items:center;padding:0 14px;font-size:13.5px}
+ main{order:1;padding:18px 16px 40px}
+ .sub{order:2;padding:28px 16px 96px;border-top:1px solid var(--line)}
+ h1{font-size:26px;margin:8px 0 6px}
+ .lede .l-long{display:none}.lede .l-short{display:inline}
+ .lede{font-size:14px;line-height:1.5;margin-bottom:20px}
+ .sec{margin-bottom:10px}
+ /* policy rates: three compact cards side by side, tap one for its detail */
+ .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px}
+ .kpi{padding:10px 9px 11px;cursor:pointer;min-height:44px}
+ .kpi.sel{--c:var(--ink);border-color:var(--ink)}
+ .kh{display:block}
+ .kh .mono{display:none}
+ .kh .label{display:block;font-size:10.5px;color:var(--ink)}
+ .rl{display:block;font-size:8px;letter-spacing:.08em;margin-top:4px;color:var(--mute);line-height:1.3}
+ .rl::before,.nl::before{content:none}
+ .nl{display:block;color:var(--sub);margin-top:1px}
+ .kdet .tag{margin-right:8px}
+ .kdet .nl{display:inline}.kdet .nl::before{content:" · "}
+ .kv{font-size:21px;margin:10px 0 0;letter-spacing:-.04em;height:26px;display:flex;align-items:baseline}
+ .kv.long{font-size:16.5px}
+ .kv small{font-size:10px;margin-left:1px}
+ .ksub,.kfoot,.kr .dt{display:none}
+ .kr{margin-top:10px;padding-top:9px;gap:9px}
+ .kr div{grid-template-columns:1fr;gap:3px;font-size:11px}
+ .kr div:nth-child(3){display:none}
+ .kr .label{font-size:8.5px;padding-top:0}
+ .tag{margin-right:0;font-size:9.5px;padding:1px 5px}
+ .kdet{display:none;padding:14px 16px;margin:0 0 10px}
+ .kdet.on{display:block}
+ .kdet .kr{margin-top:10px;padding-top:10px}
+ .kdet .kr div{grid-template-columns:64px 1fr;gap:8px;font-size:13px}
+ .kdet .kr div:nth-child(3){display:grid}
+ .kfoot2{display:flex;justify-content:space-between;margin-top:12px;font:10px var(--mono);color:var(--mute)}
+ .kfoot2 a{text-decoration:none;border-bottom:1px solid var(--line2);padding:6px 0}
+ .knote{margin:0 0 22px;font-size:9.5px}
+ /* counts: three that matter, small */
+ .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;margin:0}
+ .stat:nth-child(3),.stat:nth-child(4){display:none}
+ .stat b{font-size:20px}
+ .stat .label{font-size:9px;letter-spacing:.1em;margin-top:5px}
+ /* report cards */
+ .story{display:block;padding:18px 0 16px;cursor:pointer}
+ .story:active{background:rgba(255,255,255,.025)}
+ .idx{display:none}
+ .meta1{gap:8px;margin-bottom:9px;flex-wrap:nowrap}
+ .meta1 .label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ .meta1 .mono{margin-left:auto;font-size:10.5px}
+ .chev{flex:0 0 auto;width:22px;text-align:center;font:500 18px/1 var(--mono);color:var(--sub)}
+ .chev::before{content:"+"}
+ .story.ex .chev::before,.story.open .chev::before{content:"\2212"}
+ .story h2{font-size:18.5px;line-height:1.3;margin:0 0 8px}
+ .bluf{font-size:14.5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .story.ex .bluf,.story.open .bluf{display:block;overflow:visible}
+ .take,.meta2{display:none}
+ .story.ex .take,.story.open .take{display:block;margin-top:14px;font-size:14.5px}
+ .story.ex .meta2,.story.open .meta2{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px}
+ .tog{flex:1 1 100%;display:block;box-sizing:border-box;text-align:center;border:1px solid var(--ink);padding:13px 12px;min-height:44px;margin:4px 0 0}
+ .tog:active{background:var(--ink);color:#000}
+ .det{margin-top:16px;padding:18px 14px}
+ .det .prose p{font-size:15px;line-height:1.7}
+ .poll{padding:18px 16px}
+ .pq{font-size:19px;margin:10px 0 16px}
+ .pbtn{padding:18px 12px;min-height:56px}
+ .pbar{grid-template-columns:36px minmax(0,1fr) 50px;gap:10px}
+ .pbar b{font-size:17px}
+ .eor{padding-top:20px}
+ footer{padding:20px 16px 90px}
+}
+@media(max-width:560px){
+ .cls{font-size:8px;letter-spacing:.08em;padding:6px 4px;white-space:nowrap}
+ .bar .r #dtg{display:none}
+ .brand{font-size:14px;gap:10px}
+ .brand img{height:32px}
+}
+#subbar{display:none}
+@media(max-width:860px){
+ #subbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(0,0,0,.96);border-top:1px solid var(--line2);backdrop-filter:blur(8px);transition:transform .25s}
+ #subbar.off{transform:translateY(110%)}
+ #subbar span{font:500 10px var(--mono);letter-spacing:.12em;color:var(--sub);text-transform:uppercase;line-height:1.4}
+ #subbar button{all:unset;cursor:pointer;background:var(--ink);color:#000;font:600 11px var(--sans);letter-spacing:.16em;padding:10px 16px;text-transform:uppercase;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){#boot{display:none}.link::before{animation:none}}
+</style>
+</head>
+<body>
+<div id="boot"><pre id="bootTxt"></pre></div>
+<div class="cls">Unclassified // Open-source intelligence // For information only</div>
+<div class="bar">
+ <span class="brand"><img src="data:image/png;base64,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" alt="" width="36" height="36">RECON</span>
+ <span class="r"><span class="mono hide-s" id="upd"></span><span class="mono hide-s" id="net"></span><span class="mono link hide-s">LINK SECURE</span><span class="mono" id="dtg"></span><button class="snd" id="snd" aria-pressed="true">AUDIO ON</button></span>
+</div>
+<div class="wrap">
+ <aside class="rail">
+  <div class="label">Area of operations</div>
+  <div class="ao" id="ao"></div>
+  <div class="sub">
+   <div class="label">Morning brief · 0700 UK</div>
+   <p>Your commute read, in your inbox before you board.</p>
+   <form id="f">
+    <input type="email" id="em" placeholder="Email address" required autocomplete="email" aria-label="Email address">
+    <button class="go" id="go">SUBSCRIBE</button>
+    <div class="msg" id="msg" role="status"></div>
+   </form>
+   <div class="fine">Double opt-in. Unsubscribe in one click. Your selected area of operations sets your sectors.</div>
+  </div>
+ </aside>
+ <main>
+  <div class="label">SITREP · United Kingdom</div>
+  <h1>UK Market Intelligence.</h1>
+  <p class="lede"><span class="l-long">Open-source reconnaissance on UK rates, banks and markets. Every report is cross-checked across independent outlets and verified against primary sources: the Bank of England, ONS, OBR and HM Treasury. Assessed. Sourced. Delivered before the open.</span><span class="l-short">Open-source reconnaissance on UK rates, banks and markets. Assessed. Sourced. Delivered before the open.</span></p>
+
+  <div class="sec"><span class="label">§1 · Policy rates</span></div>
+  <div class="kpis" id="kpis"></div><div class="kdet br" id="kdet"></div>
+  <div class="knote" id="knote"></div>
+
+  <div class="sec"><span class="label" id="s2h">§2 · Intelligence reports</span></div>
+  <div class="stats">
+   <div class="stat"><b id="s1">–</b><span class="label">Reports</span></div>
+   <div class="stat"><b id="s2">–</b><span class="label">Outlets</span></div>
+   <div class="stat"><b id="s5">–</b><span class="label">Official releases</span></div>
+   <div class="stat"><b id="s3">–</b><span class="label">High confidence</span></div>
+   <div class="stat"><b id="s4">–</b><span class="label">Tube read</span></div>
+  </div>
+  <div id="fw"><div id="feed" aria-live="polite"></div></div>
+  <div id="pollsec" hidden><div class="sec" style="margin-top:44px"><span class="label">§3 · Daily poll</span></div><div class="poll br" id="poll"></div></div>
+  <div class="eor">— END OF REPORT —</div>
+ </main>
+</div>
+<div id="subbar" class="off"><span>Morning brief · 0700 UK</span><button id="subgo" type="button">Subscribe</button></div>
+<footer>Reports are AI-generated summaries of third-party reporting and may contain errors. Verify via the linked sources. General information only, not financial advice.</footer>
+<div class="cls bot">Unclassified // Open-source intelligence // For information only</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(u)?u:'#';
+const STORIES_URL='/api/stories',RATES_URL='/api/rates',POLLQ='/api/poll',VOTE_BASE='/api/poll';   // the static build swaps these for data/*.json and the vote service
+
+/* ---------- SOUND (synthesised with WebAudio: no files) ---------- */
+const SFX=(()=>{
+ let ctx,unlocked=false,on=true;
+ try{on=localStorage.getItem('sfx')!=='0'}catch(e){}
+ const get=()=>{
+  if(!on||!unlocked)return null;
+  if(!ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ctx=new A()}catch(e){return null}}
+  if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+  return ctx};
+ const tone=(f,t0,d,o={})=>{const c=get();if(!c)return;const {type='sine',g=.03,f2}=o,t=c.currentTime+t0;
+  const os=c.createOscillator(),v=c.createGain();os.type=type;os.frequency.setValueAtTime(f,t);
+  if(f2)os.frequency.exponentialRampToValueAtTime(f2,t+d);
+  v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g,t+.006);v.gain.exponentialRampToValueAtTime(.0001,t+d);
+  os.connect(v).connect(c.destination);os.start(t);os.stop(t+d+.03)};
+ const noise=(t0,d,o={})=>{const c=get();if(!c)return;const {g=.03,f=2000,q=1}=o,t=c.currentTime+t0;
+  const n=Math.max(1,Math.floor(c.sampleRate*d)),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource();s.buffer=b;const fl=c.createBiquadFilter();fl.type='bandpass';fl.frequency.value=f;fl.Q.value=q;
+  const v=c.createGain();v.gain.value=g;s.connect(fl).connect(v).connect(c.destination);s.start(t)};
+ const api={
+  unlock(){unlocked=true},
+  isOn:()=>on,
+  set(v){on=v;try{localStorage.setItem('sfx',v?'1':'0')}catch(e){}},
+  hover(){tone(2400,0,.03,{g:.01})},
+  click(){tone(900,0,.045,{type:'square',g:.018,f2:600});noise(0,.025,{g:.03,f:3200})},
+  select(){noise(0,.26,{g:.026,f:1700,q:.7});tone(1400,.26,.06,{g:.011});tone(1050,.34,.07,{g:.011})},   // radio squelch + chirp (longer, quieter)
+  open(){tone(190,0,.06,{type:'square',g:.03,f2:120});tone(260,.08,.04,{type:'square',g:.02});noise(.08,.03,{g:.03,f:900})}, // relay clack
+  close(){tone(150,0,.06,{type:'square',g:.025,f2:95})},
+  ok(){[880,1100,1320].forEach((f,i)=>tone(f,i*.09,.08,{g:.03}))},
+  err(){tone(140,0,.28,{type:'sawtooth',g:.03,f2:100})},
+  boot(){noise(0,.18,{g:.035,f:1500,q:.6});tone(1200,.2,.05,{g:.02});tone(1600,.27,.05,{g:.02})}
+ };
+ return api})();
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>SFX.unlock(),{once:true,capture:true}));
+const sndBtn=$('#snd');
+const paintSnd=()=>{sndBtn.textContent=SFX.isOn()?'AUDIO ON':'AUDIO OFF';sndBtn.setAttribute('aria-pressed',SFX.isOn())};
+paintSnd();
+sndBtn.addEventListener('click',e=>{e.stopPropagation();SFX.unlock();SFX.set(!SFX.isOn());paintSnd();if(SFX.isOn())SFX.ok()});
+
+/* ---------- boot sequence ---------- */
+const bootP=new Promise(done=>{const b=$('#boot');let seen=false;try{seen=sessionStorage.getItem('boot')==='1';sessionStorage.setItem('boot','1')}catch(e){}
+ if(seen||matchMedia('(prefers-reduced-motion:reduce)').matches){b.remove();done();return}
+ const L=['RECON // UK ECONOMIC INTELLIGENCE','ESTABLISHING LINK ........ OK','SOURCE FEEDS .............. ONLINE','CORROBORATION ENGINE ...... READY'];
+ let i=0;const t=$('#bootTxt');const step=()=>{t.textContent=L.slice(0,++i).join('\n');if(i<L.length)setTimeout(step,260);else setTimeout(()=>{b.classList.add('off');setTimeout(()=>{b.remove();done()},500)},380)};step();
+ b.addEventListener('click',()=>{b.classList.add('off');setTimeout(()=>{b.remove();done()},400)})});
+
+/* ---------- clock / DTG ---------- */
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'],p2=n=>String(n).padStart(2,'0');
+function tick(){const d=new Date();$('#dtg').textContent=`DTG ${p2(d.getUTCDate())}${p2(d.getUTCHours())}${p2(d.getUTCMinutes())}Z ${MON[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`}
+tick();setInterval(tick,15000);
+
+/* ---------- KPI: policy rates ---------- */
+let RATES=null;
+function tminus(iso){const ms=new Date(iso)-Date.now();if(isNaN(ms))return '';if(ms<=0)return 'DECISION DUE';
+ const m=Math.floor(ms/6e4),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mm=m%60;
+ return d>0?`T-${d}D ${p2(h)}H`:`T-${p2(h)}H ${p2(mm)}M`}
+function renderRates(){
+ if(!RATES){$('#kpis').innerHTML='';return}
+ const a=new Date(RATES.asOf+'T00:00:00Z');
+ $('#kpis').innerHTML=RATES.banks.map((b,i)=>`<div class="kpi br" data-i="${i}">
+  <div class="kh"><span class="label">${esc(b.code)}<span class="rl">${esc(b.rateLabel)}</span></span><span class="mono">RATE-0${i+1}</span></div>
+  <div class="kv${String(b.rate).length>5?' long':''}">${esc(b.rate)}<small>${esc(b.unit||'%')}</small></div>
+  <div class="ksub">${esc(b.sub||'')}</div>
+  <div class="kr">
+   <div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span><span class="dt">${esc(b.lastMoveDetail)}</span></span></div>
+   <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span><span class="nl">${esc(b.nextLabel)}</span></span></div>
+   ${b.market?`<div><span class="label">Market</span><span>${esc(b.market)}</span></div>`:''}
+  </div>
+  <div class="kfoot"><span>SRC ${esc(b.source.name).toUpperCase()}${b.stale?'<span class="stale">STALE</span>':''}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>
+  ${b.marketSource?`<div class="kfoot" style="margin-top:4px"><span>MKT PRICING ${esc(b.marketSource.name).toUpperCase()}</span><a href="${esc(safeUrl(b.marketSource.url))}" target="_blank" rel="noopener noreferrer">VIEW ↗</a></div>`:''}</div>`).join('');
+  const kd=$('#kdet');if(kd){kd.innerHTML='';kd.className='kdet'}
+ $('#knote').textContent=`AS OF ${p2(a.getUTCDate())} ${MON[a.getUTCMonth()]} ${String(a.getUTCFullYear()).slice(2)} · MARKET PRICING IS INDICATIVE`;
+}
+function kpiDetail(i){const b=RATES.banks[i];return `<div class="label">${esc(b.code)} · ${esc(b.rateLabel)}${b.stale?'<span class="stale">STALE</span>':''}</div>
+ <div class="kr"><div><span class="label">Last</span><span><span class="tag">${esc(b.lastMove)}</span>${esc(b.lastMoveDetail)}</span></div>
+ <div><span class="label">Next</span><span><span class="t-minus" data-n="${esc(b.next)}">${tminus(b.next)}</span> · ${esc(b.nextLabel)}</span></div>
+ ${b.market?`<div><span class="label">Market</span><span>${esc(b.market)}</span></div>`:''}
+ ${b.sub?`<div><span class="label">Other</span><span>${esc(b.sub)}</span></div>`:''}</div>
+ <div class="kfoot2"><span>SRC ${esc(b.source.name).toUpperCase()}</span><a href="${esc(safeUrl(b.source.url))}" target="_blank" rel="noopener noreferrer">VERIFY ↗</a></div>`}
+setInterval(()=>document.querySelectorAll('.t-minus').forEach(e=>e.textContent=tminus(e.dataset.n)),30000);
+
+/* ---------- offline mode (Tube): service worker keeps the last brief ---------- */
+const netEl=$('#net'),paintNet=()=>{netEl.textContent=navigator.onLine?'':'OFFLINE · LAST BRIEF'};
+addEventListener('online',paintNet);addEventListener('offline',paintNet);paintNet();
+try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('/sw.js').catch(()=>{})}catch(e){}
+
+/* ---------- scramble / decode transition ---------- */
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const GL='█▓▒░#%&$@/\\|<>01=+*';
+const rg=()=>GL[Math.random()*GL.length|0];
+function tnodes(root){const out=[],w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>(n.nodeValue.trim()&&!n.parentElement.closest('.det,script,style'))?1:2});
+ let n;while(n=w.nextNode())out.push(n);return out}
+const sIndex=n=>{const st=n.parentElement.closest('.story');return st?Math.min(8,[...st.parentNode.children].indexOf(st)):0};
+function scrambleOut(root,ms){ // existing text corrupts into noise
+ if(REDUCED)return Promise.resolve();
+ const id=root.__run=(root.__run||0)+1,ns=tnodes(root).map(n=>({n,f:n.nodeValue,r:[...n.nodeValue].map(()=>Math.random())}));
+ return new Promise(res=>{const t0=performance.now();let last=0;
+  (function fr(now){if(id!==root.__run)return res();const p=Math.min(1,(now-t0)/ms);
+   if(now-last>40||p===1){last=now;ns.forEach(o=>{o.n.nodeValue=[...o.f].map((c,i)=>c===' '||c==='\n'?c:(o.r[i]<p*1.15?rg():c)).join('')})}
+   p<1?requestAnimationFrame(fr):res()})(t0)})}
+function scrambleIn(root,{dur=700,step=80}={}){ // noise resolves into the real text, staggered per report
+ if(REDUCED)return;
+ const id=root.__run=(root.__run||0)+1,ns=tnodes(root).map(n=>{const f=n.nodeValue;return{n,f,d:sIndex(n)*step,r:[...f].map(()=>Math.random())}});
+ ns.forEach(o=>o.n.nodeValue=[...o.f].map(c=>c===' '?c:rg()).join(''));
+ const total=dur+Math.max(0,...ns.map(o=>o.d)),sc=document.createElement('div');sc.className='scan';sc.style.setProperty('--sd',(total/1000+.15)+'s');
+ const host=root.id==='feed'?$('#fw'):root;if(host&&getComputedStyle(host).position!=='static'){host.appendChild(sc);requestAnimationFrame(()=>sc.classList.add('go'));setTimeout(()=>sc.remove(),total+400)}
+ const t0=performance.now();let last=0;
+ (function fr(now){if(id!==root.__run){ns.forEach(o=>o.n.nodeValue=o.f);return}
+  let done=true;const upd=now-last>45;
+  ns.forEach(o=>{const p=(now-t0-o.d)/dur;
+   if(p>=1){if(o.n.nodeValue!==o.f)o.n.nodeValue=o.f;return}
+   done=false;if(!upd)return;
+   o.n.nodeValue=[...o.f].map((c,i)=>c===' '||c==='\n'?c:(p>0&&p>o.r[i]*.85+(i/o.f.length)*.15?c:rg())).join('')});
+  if(upd)last=now;done?0:requestAnimationFrame(fr)})(t0)}
+const swap=async fn=>{ // used for every content change: corrupt -> re-render -> decode
+ $('#feed').setAttribute('aria-busy','true');
+ await scrambleOut($('#feed'),230);fn();
+ scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0});
+ $('#feed').removeAttribute('aria-busy')};
+
+/* ---------- reports ---------- */
+let ALL=[],TOPICS=[],topic='ALL',EVENTS={},GEN='';
+function ago(iso){const m=Math.max(1,Math.round((Date.now()-new Date(iso))/6e4));return m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'}
+const conf=c=>({HIGH:3,MEDIUM:2,LOW:1}[c]||2);
+const LBL={'RATES & BOE':'Rates & BoE','UK ECONOMY':'UK economy','BANKING':'Banking','MARKETS':'Gilts, FX & commodities','STOCKS':'Stocks & equities','PROPERTY':'Property & mortgages','FISCAL':'Fiscal & policy','ENERGY & TRADE':'Energy & trade'};
+const cap=t=>LBL[t]||(t.charAt(0)+t.slice(1).toLowerCase());
+const tubeMins=l=>Math.max(1,Math.round(l.reduce((n,s)=>n+[s.headline,s.summary,s.whyItMatters,...s.keyPoints].join(' ').split(/\s+/).length,0)/200));
+const prec=n=>n<3?['PRELIMINARY','']:n>=6?['FLASH','p2']:n>=4?['PRIORITY','p1']:['ROUTINE',''];
+const para=(t,src)=>`<p>${esc(t).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</p>`;
+const evLabel=id=>{const e=EVENTS[id];if(!e)return id;const d=new Date(e.date);return `${p2(d.getUTCDate())} ${MON[d.getUTCMonth()]} · ${e.label}`};
+const asmWords=a=>a?a.words:0;
+function sec(title,html){return html?`<section><h4>${title}</h4>${html}</section>`:''}
+function detail(s){
+ const a=s.assessment,an=s.analysis,src=s.sources;let h='';
+ h+=`<section class="top"><h4>Key points</h4><ul>${s.keyPoints.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></section>`;
+ h+=sec('Why it matters · UK angle',`<div class="prose"><p>${esc(s.whyItMatters)}</p></div>`);
+ if(!a)h+=`<div class="note">BRIEF · Built from headlines and short feed summaries. No primary-source text was available for this event, so there is no full assessment.</div>`;
+ if(a){
+  if(a.meta&&a.meta.note)h+=`<div class="note">${esc(a.meta.kind)} · ${esc(a.meta.note)}</div>`;
+  h+=sec('Situation',a.situation?.length?`<div class="prose">${a.situation.map(x=>para(x,src)).join('')}</div>`:'');
+  h+=sec('By the numbers',a.numbers?.length?`<table class="nums"><tr><th>Metric</th><th>Figure</th><th>Src</th></tr>${a.numbers.map(n=>`<tr><td>${esc(n.label)}${n.context?`<small>${esc(n.context)}</small>`:''}</td><td class="v">${esc(n.value)}</td><td class="s">[${n.source}]</td></tr>`).join('')}</table>`:'');
+  h+=sec('Background',a.background?.length?`<div class="prose">${a.background.map(x=>para(x,src)).join('')}</div>`:'');
+  h+=sec('Market reaction',a.market_reaction?.length?`<div class="prose">${a.market_reaction.map(x=>para(x,src)).join('')}</div>`:'');
+  const cmp=[...(a.compare||[])];
+  h+=sec('Sources compared',(cmp.length?`<div class="prose">${cmp.map(x=>para(x,src)).join('')}</div>`:'')+s.disagreements.map(d=>`<div class="dissent">${esc(d)}</div>`).join(''));
+  h+=sec('What to watch',a.watch?.length?`<ul class="watch">${a.watch.map(w=>`<li><span class="when">${esc(w.when)}</span><span>${esc(w.what).replace(/\[(\d+)\]/g,(m,n)=>`<sup class="cite" title="${esc((src[n-1]||{}).name||'')}">${n}</sup>`)}</span></li>`).join('')}</ul>`:'');
+ }
+ h+=an?`<div class="rx br"><div class="rxh"><span>RECON ANALYSIS</span><span>AI OPINION · NOT FINANCIAL ADVICE</span></div>
+  <div class="thesis">${esc(an.thesis)}</div>
+  <div class="prose">${an.body.map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+  ${an.links?.length?`<div class="rxrow"><span class="label">Connects to</span><span class="chips">${an.links.map(l=>l.type==='report'?`<button class="chp" data-rpt="${l.ref}">RPT-${String(l.ref).padStart(4,'0')}</button>`:`<span class="chp">${esc(evLabel(l.ref))}</span>`).join('')}</span></div>`:''}
+  ${an.counter?`<div class="rxrow"><span class="label">Counter-case</span><span>${esc(an.counter)}</span></div>`:''}
+  <div class="rxrow"><span class="label">Conviction</span><span><span class="sq">${[1,2,3].map(n=>`<i class="${n<=conf(an.conviction)?'f':''}"></i>`).join('')}</span> <span class="mono">${esc(an.conviction)}</span></span></div>
+  <div class="disc">Generated by RECON's AI from the report above, other recent reports and the events calendar. It is opinion, not fact, and may be wrong. Not financial advice.</div></div>`:'';
+ h+=sec(`Sources (${s.sourceCount})`,`<div class="srcs">${src.map((x,i)=>`<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer"><span class="mono">[${i+1}]</span> ${esc(x.name)} ↗</a>`).join('')}</div>`);
+ return h}
+const isRel=s=>s.kind==='RELEASE';
+function renderAo(){
+ $('#ao').innerHTML=['ALL','__OFFICIAL__',...TOPICS].map(t=>`<button class="${t===topic?'on':''}" data-t="${esc(t)}">${t==='ALL'?'All sectors':t==='__OFFICIAL__'?'Official releases':esc(cap(t))}<span>${t==='ALL'?ALL.length:t==='__OFFICIAL__'?ALL.filter(isRel).length:ALL.filter(s=>s.topic===t).length}</span></button>`).join('')}
+function render(){
+ const list=topic==='ALL'?ALL:topic==='__OFFICIAL__'?ALL.filter(isRel):ALL.filter(s=>s.topic===topic);
+ renderAo();
+ $('#s2h').textContent='§2 · Intelligence reports'+(topic==='ALL'?'':' · '+(topic==='__OFFICIAL__'?'OFFICIAL RELEASES':(LBL[topic]||topic).toUpperCase()));
+ const rep_=list.filter(x=>!isRel(x));   // every figure below describes what is on screen (the selected sector)
+ $('#s1').textContent=rep_.length;
+ $('#s5').textContent=list.filter(isRel).length;
+ $('#s2').textContent=new Set(list.flatMap(x=>x.sources.map(y=>y.name))).size;
+ $('#s3').textContent=list.filter(x=>x.confidence==='HIGH').length;
+ $('#s4').textContent=list.length?tubeMins(list)+' min':'–';
+ $('#feed').innerHTML=list.length?list.map(s=>{const c=conf(s.confidence),[pl,pc]=isRel(s)?['OFFICIAL','p2']:prec(s.sourceCount);return `<article class="story" id="rpt-${s.id}" data-id="${s.id}">
+  <div class="idx">RPT-${String(s.id).padStart(4,'0')}</div>
+  <div>
+   <div class="meta1"><span class="prec ${pc}">${pl}</span><span class="label">${esc(s.topic)}</span><span class="mono">${ago(s.updatedAt)}</span><span class="chev" aria-hidden="true"></span></div>
+   <h2>${esc(s.headline)}</h2>
+   <p class="bluf"><b>BLUF</b>${esc(s.summary)}</p>
+   ${s.analysis?`<p class="take"><b>RECON TAKE</b>${esc(s.analysis.thesis)}</p>`:''}
+   <div class="meta2">
+    ${isRel(s)?`<span><span class="label">Source</span><span class="mono">${esc((s.sources[0]||{}).name||'')} · PRIMARY DOCUMENT</span></span>`:`<span><span class="label">Sources</span><span class="mono">${s.sourceCount}</span></span>
+    <span><span class="label">Confidence</span><span class="sq">${[1,2,3].map(n=>`<i class="${n<=c?'f':''}"></i>`).join('')}</span><span class="mono">${esc(s.confidence)}</span></span>`}
+    <button class="tog" aria-expanded="false">${s.assessment&&s.assessment.situation&&s.assessment.situation.length?'Assessment'+(s.readMins?' · '+s.readMins+' min':''):'Details'}</button>
+   </div>
+   <div class="det br">${detail(s)}</div>
+  </div></article>`}).join(''):`<div class="empty">No corroborated reporting in this sector. Reports are published once two or more outlets confirm the same event.</div>`;
+}
+
+/* ---------- daily poll ---------- */
+let POLL=null;
+const pkey=id=>'recon-poll-'+id;
+const myVote=id=>{try{return localStorage.getItem(pkey(id))}catch(e){return null}};
+const setVote=(id,v)=>{try{localStorage.setItem(pkey(id),v)}catch(e){}};
+const pct=(a,b)=>{const t=a+b;return t?Math.round(a/t*100):0};
+function pollBars(r,mine){
+ const t=r.yes+r.no,y=pct(r.yes,r.no),n=t?100-y:0;
+ return `<div class="pbars"><div class="pbar${mine==='yes'?' mine':''}"><span class="label">Yes</span><div class="trk"><div class="fill" data-w="${y}"></div></div><b>${y}%</b></div><div class="pbar${mine==='no'?' mine':''}"><span class="label">No</span><div class="trk"><div class="fill dim" data-w="${n}"></div></div><b>${n}%</b></div></div><div class="pmeta mono">${t} VOTE${t===1?'':'S'}${mine?' · YOU VOTED '+mine.toUpperCase():''} · NEW QUESTION EVERY MORNING</div>`}
+function drawPoll(results){
+ const el=$('#poll'),p=POLL,mine=myVote(p.id);
+ const link=p.storyId?`<button class="chp" data-rpt="${p.storyId}">RPT-${String(p.storyId).padStart(4,'0')}</button>`:'';
+ el.innerHTML=`<div class="pmeta2"><span class="label">Today's question · ${esc(p.id)}</span>${link}</div><h3 class="pq">${esc(p.question)}</h3>`+
+  (mine&&results?pollBars(results,mine):mine?'<div class="pmeta mono">LOADING RESULTS…</div>':`<div class="pbtns"><button class="pbtn" data-v="yes">YES</button><button class="pbtn" data-v="no">NO</button></div><div class="pmeta mono">VOTE TO SEE HOW OTHER READERS ANSWERED</div>`);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>el.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%')));
+}
+async function getResults(){try{const r=await fetch(VOTE_BASE+'/results?id='+encodeURIComponent(POLL.id),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();return{yes:+j.yes||0,no:+j.no||0}}catch(e){return null}}
+async function loadPoll(){
+ if(!VOTE_BASE)return;   // no vote backend configured: the poll section stays hidden
+ try{const d=await (await fetch(POLLQ,{cache:'no-cache'})).json(),p=d.poll;
+  if(!p||!p.question){$('#pollsec').hidden=true;return}
+  const changed=!POLL||POLL.id!==p.id;POLL=p;$('#pollsec').hidden=false;
+  if(changed||!$('#poll').innerHTML)drawPoll(myVote(p.id)?await getResults():null);
+  else if(myVote(p.id)){const r=await getResults();if(r)drawPoll(r)}
+ }catch(e){}}
+document.addEventListener('click',async e=>{const b=e.target.closest('.pbtn');if(!b||!POLL)return;SFX.click();const v=b.dataset.v;b.disabled=true;
+ try{const r=await fetch(VOTE_BASE+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:POLL.id,choice:v})});
+  if(!r.ok&&r.status!==409)throw 0;
+  setVote(POLL.id,v);const j=r.ok?await r.json():await getResults();drawPoll({yes:+(j&&j.yes)||0,no:+(j&&j.no)||0});SFX.ok()}
+ catch(err){SFX.err();const m=document.querySelector('#poll .pmeta');if(m)m.textContent='COULD NOT RECORD YOUR VOTE. TRY AGAIN IN A MOMENT.';b.disabled=false}});
+setInterval(()=>{if(POLL&&myVote(POLL.id)&&!document.hidden)getResults().then(r=>r&&drawPoll(r))},30000);
+loadPoll();
+/* ---------- freshness: "updated X ago" + quiet refresh while the page is open ---------- */
+function paintUpd(){const el=$('#upd');if(!el||!GEN){return}const m=Math.max(0,Math.round((Date.now()-new Date(GEN))/6e4));el.textContent='UPDATED '+(m<1?'JUST NOW':m<60?m+'M AGO':m<1440?Math.round(m/60)+'H AGO':Math.round(m/1440)+'D AGO')}
+setInterval(paintUpd,30000);
+async function refreshData(){
+ try{const d=await (await fetch(STORIES_URL,{cache:'no-cache'})).json();
+  if(d.generatedAt&&d.generatedAt!==GEN){const open=[...document.querySelectorAll('.story.open')].map(x=>x.id);GEN=d.generatedAt;ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};render();open.forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('open')});paintUpd()}
+  const r=await (await fetch(RATES_URL,{cache:'no-cache'})).json();RATES=r;renderRates();
+  loadPoll()}catch(e){}}
+setInterval(()=>{if(!document.hidden)refreshData()},5*60*1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData()});
+
+/* ---------- deep links: #rpt-12 opens a report ---------- */
+function openReport(id){
+ if(topic!=='ALL'){topic='ALL';render()}
+ const st=document.getElementById('rpt-'+id);if(!st)return;
+ st.classList.add('open','ex');const g=st.querySelector('.tog');if(g)g.setAttribute('aria-expanded','true');
+ st.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+}
+function openHash(){const m=/^#rpt-(\d+)$/.exec(location.hash);if(m)openReport(+m[1])}
+addEventListener('hashchange',openHash);
+
+/* ---------- interaction ---------- */
+const MOB=()=>matchMedia('(max-width:860px)').matches;
+document.addEventListener('click',e=>{
+ const t=e.target.closest('#ao button');if(t){if(t.dataset.t===topic)return;topic=t.dataset.t;SFX.select();renderAo();swap(render);return}
+ const kp=e.target.closest('.kpi');if(kp&&MOB()&&!e.target.closest('a')){const i=+kp.dataset.i,kd=$('#kdet'),same=kd.dataset.i==i&&kd.classList.contains('on');document.querySelectorAll('.kpi').forEach(x=>x.classList.remove('sel'));if(same){kd.classList.remove('on');SFX.close()}else{kd.dataset.i=i;kd.innerHTML=kpiDetail(i);kd.classList.add('on');kp.classList.add('sel');SFX.open()}return}
+ const g=e.target.closest('.tog');if(g){const st=g.closest('.story');const o=st.classList.toggle('open');g.setAttribute('aria-expanded',o);o?SFX.open():SFX.close();return}
+ const sc=e.target.closest('.story');if(sc&&MOB()&&!e.target.closest('.det,.tog,a,button')){const o=sc.classList.toggle('ex');o?SFX.open():SFX.close();return}
+ const rp=e.target.closest('[data-rpt]');if(rp){SFX.click();openReport(+rp.dataset.rpt);return}
+ if(e.target.closest('.srcs a,.kfoot a'))SFX.click();
+});
+let lastH=null;
+document.addEventListener('mouseover',e=>{
+ const t=e.target.closest('#ao button,.srcs a,.go,.tog,.kfoot a');
+ if(t===lastH)return;lastH=t;if(!t)return;
+ SFX.hover()});
+$('#f').addEventListener('submit',async e=>{
+ e.preventDefault();const b=$('#go'),m=$('#msg');b.disabled=true;m.className='msg';m.textContent='Transmitting…';SFX.click();
+ try{const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value,topics:topic==='ALL'?[]:[topic]})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+  m.textContent='Check your inbox to confirm.';$('#em').value='';SFX.ok();
+ }catch(err){m.className='msg er';m.textContent=err.message;SFX.err()}
+ b.disabled=false;
+});
+function subscribedBanner(){if(location.hash==='#subscribed'){$('#msg').className='msg';$('#msg').textContent="You're subscribed. Your first brief arrives at 07:00 UK time.";history.replaceState(null,'',location.pathname+location.search)}}
+subscribedBanner();addEventListener('hashchange',subscribedBanner);
+fetch(STORIES_URL).then(r=>r.json()).then(async d=>{GEN=d.generatedAt||'';ALL=d.stories;TOPICS=d.topics;EVENTS=d.events||{};paintUpd();render();openHash();await bootP;scrambleIn($('#feed'));scrambleIn($('.stats'),{dur:500,step:0})}).catch(()=>{$('#feed').innerHTML='<div class="empty">Feed offline.</div>'});
+fetch(RATES_URL).then(r=>r.json()).then(async d=>{RATES=d;renderRates();await bootP;scrambleIn($('#kpis'),{dur:800,step:0})}).catch(()=>{$('#kpis').innerHTML='<div class="empty" style="grid-column:1/-1">Rate data unavailable.</div>'});
+
+/* mobile: sticky sector strip sits under the header; subscribe bar hides once the real form is on screen */
+(function(){const bar=document.querySelector('.bar'),sb=document.getElementById('subbar'),sub=document.querySelector('.sub');
+ const setH=()=>document.documentElement.style.setProperty('--barh',bar.offsetHeight+'px');setH();addEventListener('resize',setH);
+ let seen=false;const upd=()=>{const r=sub.getBoundingClientRect(),vis=r.top<innerHeight-40;sb.classList.toggle('off',vis||scrollY<300)};
+ addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();
+ document.getElementById('subgo').addEventListener('click',()=>{sub.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>document.getElementById('em').focus({preventScroll:true}),500)})})();
+</script>
+</body>
+</html>
