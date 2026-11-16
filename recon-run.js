@@ -1890,6 +1890,12 @@ var require_build_site = __commonJS({
         console.log("[site] status page skipped:", err.message);
       }
       for (const [f, buf] of Object.entries(require_brand().files())) fs.writeFileSync(path.join(out, f), buf);
+      try {
+        const nl2 = require_newsletter(), sel = nl2.storiesFor([]);
+        fs.writeFileSync(path.join(out, "newsletter-preview.html"), `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>RECON newsletter preview</title><body style="margin:0;background:#1a1a1a"><p style="font:12px ui-monospace,monospace;color:#999;text-align:center;padding:10px;margin:0">PREVIEW of the next daily brief \xB7 ${sel.all.length} stories \xB7 subject: ${nl2.subjectFor(sel).replace(/[<&]/g, " ")}</p>${nl2.briefBody(sel).html}</body>`);
+      } catch (e) {
+        console.log("[build] newsletter preview skipped:", e.message);
+      }
       fs.writeFileSync(path.join(out, ".nojekyll"), "");
       fs.writeFileSync(path.join(out, "robots.txt"), "User-agent: *\nAllow: /\n");
       console.log(`[site] built ${out}/ (${storiesPayload().stories.length} stories)`);
