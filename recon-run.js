@@ -1696,10 +1696,12 @@ var require_rates_official = __commonJS({
       ECB: {
         url: (s, alt) => `https://${alt ? "sdw-wsrest.ecb.europa.eu" : "data-api.ecb.europa.eu"}/service/data/FM/B.U2.EUR.4F.KR.${s}.LEV?startPeriod=${new Date(Date.now() - 800 * 864e5).toISOString().slice(0, 10)}&format=csvdata`,
         series: ["DFR", "MRR_FR", "MLFR"],
-        parse(texts) {
+        fred: ["ECBDFR", "ECBMRRFR", "ECBMLFR"],
+        // the same three ECB rates, republished by FRED (works when the ECB's own servers refuse GitHub's IPs)
+        parse(texts, via) {
           const [dfr, mro, mlf] = texts.map((t, i) => {
             if (!t && i) return null;
-            const s = series(t, "time_period", "obs_value");
+            const s = via === "fred" ? series(t) : series(t, "time_period", "obs_value");
             if (!s.length && !i) throw new Error("no ECB observations");
             return s;
           });
@@ -1723,7 +1725,12 @@ var require_rates_official = __commonJS({
       }
     };
     async function getText(url, fetchFn) {
-      const r = await fetchFn(url, { headers: { "User-Agent": UA, Accept: "*/*" }, redirect: "follow", signal: AbortSignal.timeout(25e3) });
+      let r;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        r = await fetchFn(url, { headers: { "User-Agent": UA, Accept: "*/*" }, redirect: "follow", signal: AbortSignal.timeout(25e3) });
+        if (r.status < 500 && r.status !== 429) break;
+        if (attempt === 0 && !process.env.RECON_TEST) await new Promise((res) => setTimeout(res, 2500));
+      }
       if (!r.ok) throw new Error("HTTP " + r.status);
       const t = await r.text();
       if (/^\s*<(!doctype|html)/i.test(t)) throw new Error("blocked (HTML returned)");
@@ -1738,19 +1745,42 @@ var require_rates_official = __commonJS({
       const e = cal.filter((x) => x.id.startsWith(code.toLowerCase() + "-") && new Date(x.date) > now).sort((a, b) => a.date.localeCompare(b.date))[0];
       return e ? { next: e.date, nextLabel: `${d2(new Date(e.date).getUTCDate())} ${MON[new Date(e.date).getUTCMonth()]}` } : null;
     }
+    async function ecbTexts(fetchFn) {
+      const src = SOURCES.ECB, errs = [], first = (fn) => (id, i) => fn(id).catch((e) => {
+        if (i === 0) throw e;
+        return "";
+      });
+      for (const alt of [false, true]) {
+        try {
+          return { via: alt ? "ecb-alt" : "ecb", texts: await Promise.all(src.series.map(first((sx) => getText(src.url(sx, alt), fetchFn)))) };
+        } catch (e) {
+          errs.push(e.message);
+        }
+      }
+      try {
+        return { via: "fred", texts: await Promise.all(src.fred.map(first((id) => getText(SOURCES.FED.url(id), fetchFn)))) };
+      } catch (e) {
+        errs.push("FRED " + e.message);
+      }
+      throw new Error(errs.join("; "));
+    }
     async function refresh({ fetchFn = fetch, file = require_paths().RATES, now = /* @__PURE__ */ new Date() } = {}) {
       const data = JSON.parse(fs.readFileSync(file, "utf8")), results = {};
       for (const bank of data.banks) {
         const src = SOURCES[bank.code];
         if (!src) continue;
         try {
-          const got = src.series ? await Promise.all(src.series.map((s, i) => getText(src.url(s), fetchFn).catch((e0) => bank.code === "ECB" ? getText(src.url(s, true), fetchFn).catch((e1) => {
+          let via = "official";
+          const got = bank.code === "ECB" ? await ecbTexts(fetchFn).then((r) => {
+            via = r.via;
+            return r.texts;
+          }) : src.series ? await Promise.all(src.series.map((s, i) => getText(src.url(s), fetchFn).catch((e0) => bank.code === "ECB" ? getText(src.url(s, true), fetchFn).catch((e1) => {
             throw new Error(`${e0.message}; fallback ${e1.message}`);
           }) : Promise.reject(e0)).catch((e) => {
             if (i === 0 || bank.code === "FED" && i === 1) throw e;
             return "";
           }))) : await getText(src.url(), fetchFn);
-          const p = src.parse(got);
+          const p = src.parse(got, via);
           const changed = bank.rateNum != null && Math.abs(p.rateNum - bank.rateNum) > 1e-3;
           Object.assign(bank, { rate: p.rate, rateNum: p.rateNum, sub: p.sub, lastMove: p.lastMove, lastMoveDetail: p.lastMoveDetail, officialAt: now.toISOString(), officialAsAt: p.asAt, stale: false });
           const nm = nextMeeting(bank.code, now);
@@ -1763,7 +1793,7 @@ var require_rates_official = __commonJS({
             delete bank.market;
             delete bank.marketProb;
           }
-          results[bank.code] = { ok: true, rate: p.rate, asAt: p.asAt };
+          results[bank.code] = { ok: true, rate: p.rate, asAt: p.asAt + (via === "fred" ? " \xB7 via FRED (ECB data portal unavailable)" : "") };
         } catch (e) {
           const age = bank.officialAt ? (now - new Date(bank.officialAt)) / 36e5 : 1e9;
           if (age > 36) bank.stale = true;
