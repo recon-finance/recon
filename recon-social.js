@@ -689,14 +689,18 @@ ${s.read_mins && l ? `<div style="margin-top:14px"><a href="${esc2(l)}" style="f
       } catch {
       }
       const btn = (txt, href, solid) => `<a href="${esc2(href)}" style="display:inline-block;font-family:${MONO};font-weight:700;font-size:12px;letter-spacing:.18em;text-decoration:none;padding:11px 22px;text-transform:uppercase;${solid ? `background:${T.ink};color:#000000;border:1px solid ${T.ink}` : `color:${T.ink};border:1px solid ${T.ink}`}">${txt}</a>`;
+      const subUrl = site ? `${site}/?utm=newsletter#em` : "", IG = "https://www.instagram.com/recon.finance/";
+      const igLink = `<a href="${IG}" style="text-decoration:none;color:${T.ink}">${imgOK() ? `<img src="${site}/icon-instagram.png" alt="Instagram" width="24" height="24" style="display:inline-block;vertical-align:middle;border:0;width:24px;height:24px">&nbsp;` : ""}<span style="font-family:${MONO};font-size:11px;letter-spacing:.14em;vertical-align:middle">@RECON.FINANCE</span></a>`;
+      const subTop = site ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line}"><tr><td style="padding:10px 20px">${mono("FORWARDED THIS? GET THE DAILY BRIEF FREE", "font-size:10px;letter-spacing:.12em")}</td><td align="right" style="padding:10px 20px">${btn("Subscribe", subUrl, true)}</td></tr></table>` : "";
+      const subBottom = site ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:8px;border-top:1px solid ${T.line}"><tr><td style="padding:22px 0 6px">${label("Share RECON")}<div style="font-family:${SANS};font-size:15px;line-height:1.55;color:${T.sub};margin:10px 0 16px">Know someone who should read this? Forward it, or send them the free sign-up.</div>${btn("Subscribe free", subUrl, true)}<div style="margin-top:18px">${igLink}</div></td></tr></table>` : `<div style="padding-top:18px">${igLink}</div>`;
       const dateShort = (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).replace(/,/g, "").toUpperCase();
       const poll2 = pollQ && site ? `${sec("&sect;4 &middot; Daily poll")}<div style="font-family:${SANS};font-weight:600;font-size:22px;line-height:1.3;letter-spacing:-.02em;color:#ffffff;margin:0 0 16px">${esc2(pollQ)}</div>${btn("Yes", site + "/#pollsec")}&nbsp;&nbsp;${btn("No", site + "/#pollsec")}<div style="margin-top:10px">${mono("VOTE AND SEE THE LIVE RESULT ON RECON", "font-size:10.5px")}</div>` : "";
       const cta = site ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:34px;border-top:1px solid ${T.line};${wmBg("right 6px bottom 8px")}"><tr><td height="300" valign="top" style="padding:28px 0 8px;height:300px">${logoImg(54)}<div style="font-family:${SANS};font-weight:600;font-size:28px;line-height:1.15;letter-spacing:-.03em;color:#ffffff;margin:16px 0 10px">Full reports. Every morning.</div><div style="font-family:${SANS};font-size:15px;line-height:1.55;color:${T.sub};margin:0 0 18px">Read the complete RECON assessments on the website.</div>${btn(esc2(site.replace(/^https?:\/\//, "")), site, true)}</td></tr></table>` : "";
       const html = min(`<div style="background:${T.bg};font-family:${SANS};color:${T.ink}">${strip()}
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line}"><tr><td style="padding:16px 20px"><table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:12px">${logoImg(36)}</td><td style="font-family:${SANS};font-weight:700;font-size:15px;letter-spacing:.4em;color:#ffffff">RECON</td></tr></table></td><td align="right" style="padding:16px 20px">${mono(dtg())}</td></tr></table>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-bottom:1px solid ${T.line}"><tr><td style="padding:16px 20px"><table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:12px">${logoImg(36)}</td><td style="font-family:${SANS};font-weight:700;font-size:15px;letter-spacing:.4em;color:#ffffff">RECON</td></tr></table></td><td align="right" style="padding:16px 20px">${mono(dtg())}</td></tr></table>${subTop}
 <div style="padding:0 20px 8px">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${wmBg("right 6px bottom 8px")}"><tr><td height="310" style="padding:34px 0 26px;height:310px">${label("SITREP &middot; United Kingdom &middot; " + dateShort)}<div style="font-family:${SANS};font-weight:600;font-size:38px;line-height:1.05;letter-spacing:-.035em;color:#ffffff;margin:14px 0 12px">UK Market Intelligence.</div><div style="font-family:${SANS};font-size:16px;line-height:1.55;color:${T.sub};max-width:460px">${sel.reports.length || "No"} verified report${sel.reports.length === 1 ? "" : "s"} from rates, banking, markets and the economy. Every story is confirmed by two or more outlets. Tube read ${mins} min.</div><div style="margin-top:16px">${tag("OPEN SOURCE", "ink")}&nbsp;&nbsp;${mono("VERIFIED &middot; NUMBERS CHECKED &middot; SOURCED", "font-size:10px;letter-spacing:.12em")}</div></td></tr></table>
-${kpiBoard()}${sec("&sect;2 &middot; Intelligence reports")}${sel.reports.map(storyHTML).join("") || `<p style="color:${T.sub}">No corroborated stories yet today.</p>`}${releases}${poll2}${cta}
+${kpiBoard()}${sec("&sect;2 &middot; Intelligence reports")}${sel.reports.map(storyHTML).join("") || `<p style="color:${T.sub}">No corroborated stories yet today.</p>`}${releases}${poll2}${cta}${subBottom}
 <div style="padding:22px 0 20px;font-family:${MONO};font-size:10.5px;line-height:1.7;letter-spacing:.04em;color:${T.mute};text-transform:uppercase">AI-generated summaries of third-party reporting; may contain errors. Verify via the linked sources. General information only, not financial advice.${footer}</div></div>${strip()}</div>`);
       return { mins, html };
     }
@@ -1107,26 +1111,49 @@ var setMeta = (k, v) => db.prepare("INSERT OR REPLACE INTO meta (key,value) VALU
 var MIN = () => +(process.env.IG_MIN_STORIES || 3);
 var SECS = { cover: 2.8, rates: 3.6, story: 4.8, poll: 3.4, cta: 3.2 };
 var secsFor = (name) => SECS[name.split("-")[0]] || 3;
-var TAGS = () => process.env.IG_HASHTAGS || "#UKEconomy #BankOfEngland #Gilts #FTSE #Inflation #Finance";
+var TAGS = () => process.env.IG_HASHTAGS || "";
+var TOPIC_TAGS = { "RATES & BOE": ["#BankOfEngland", "#InterestRates"], "UK ECONOMY": ["#UKEconomy"], BANKING: ["#UKBanking"], MARKETS: ["#Markets"], STOCKS: ["#FTSE100"], PROPERTY: ["#UKProperty", "#Mortgages"], FISCAL: ["#UKBudget"], "ENERGY & TRADE": ["#EnergyPrices"] };
+var WORD_TAGS = [[/\b(gilts?)\b/i, "#Gilts"], [/\bftse\b/i, "#FTSE100"], [/\b(sterling|pound)\b/i, "#Sterling"], [/\b(inflation|cpi)\b/i, "#Inflation"], [/\bmortgages?\b/i, "#Mortgages"], [/\b(bank rate|mpc|bank of england|boe)\b/i, "#BankOfEngland"], [/\bgdp\b/i, "#GDP"], [/\b(budget|chancellor)\b/i, "#UKBudget"]];
+function autoTags(stories) {
+  if (TAGS()) return TAGS();
+  const out = ["#UKFinance"], add = (t) => {
+    if (t && !out.includes(t) && out.length < 5) out.push(t);
+  };
+  const per = stories.slice(0, 4).map((st) => {
+    const txt = `${st.headline} ${st.summary || ""}`;
+    return [...WORD_TAGS.filter(([re]) => re.test(txt)).map((x) => x[1]), ...TOPIC_TAGS[st.topic] || []];
+  });
+  for (let i = 0; i < 3; i++) per.forEach((l) => add(l[i]));
+  ["#UKEconomy", "#Markets"].forEach(add);
+  return out.join(" ");
+}
 var siteBase = () => String(process.env.SITE_URL || process.env.BASE_URL || "").replace(/\/+$/, "");
 var esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-function captions(date, stories, secs) {
-  const heads = stories.slice(0, 5).map((s, i) => `${i + 1}. ${S.clamp(s.headline, 120)}`).join("\n");
-  const tail = `Full reports and the 7AM brief: link in bio.
+function captions(date, stories, secs, banks = []) {
+  const up = (x) => String(x).toUpperCase(), lead = S.clamp(stories[0].headline, 110);
+  const rates = banks.length ? `RATES // ${banks.map((b) => `${b.code} ${b.rate}${b.unit || "%"}`).join(" \xB7 ")}
+
+` : "";
+  const list = (n) => stories.slice(0, n).map((s, i) => `${String(i + 1).padStart(2, "0")} // ${S.clamp(s.headline, 110)}`).join("\n");
+  const head = `RECON SITREP // ${up(date.short)}
+BLUF: ${lead}
+
+`;
+  const tail = `Every story confirmed by 2+ outlets. Numbers checked. Sources linked.
+Free 07:00 UK brief: link in bio.
 Not financial advice.
 
-${TAGS()}`;
+${autoTags(stories)}`;
   return {
-    carousel: `RECON SITREP \xB7 ${date.short}
-UK economics, banking and markets. Every story confirmed by two or more outlets.
+    carousel: `${head}${rates}${list(5)}
 
-${heads}
+SWIPE for the full picture. SAVE it. FORWARD it to a colleague.
 
 ${tail}`,
-    reel: `RECON SITREP \xB7 ${date.short}
-${Math.min(stories.length, S.MAX_STORIES())} stories in ${Math.round(secs)} seconds.
+    reel: `${head}${rates}${Math.min(stories.length, S.MAX_STORIES())} STORIES IN ${Math.round(secs)} SECONDS.
+${list(3)}
 
-${stories.slice(0, 3).map((s, i) => `${i + 1}. ${S.clamp(s.headline, 110)}`).join("\n")}
+FOLLOW @recon.finance for the daily UK SITREP.
 
 ${tail}`
   };
@@ -1167,7 +1194,7 @@ async function build() {
       M.makeAudio(audio, secs + 0.5);
       const r = M.makeReel(frames, audio, path.join(dir, "reel.mp4"));
       m.reel = { file: "reel.mp4", secs: r.secs, bytes: r.bytes };
-      Object.assign(m, { captionCarousel: captions(date, picks, r.secs).carousel, captionReel: captions(date, picks, r.secs).reel, storyIds: picks.map((s) => s.id), ready: true });
+      Object.assign(m, { ...((c) => ({ captionCarousel: c.carousel, captionReel: c.reel }))(captions(date, picks, r.secs, input.rates.banks)), storyIds: picks.map((s) => s.id), ready: true });
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   } catch (e) {
@@ -1239,11 +1266,19 @@ async function publish() {
     if (m.error) throw new Error(m.reasons.join("; "));
     return;
   }
-  if (!force && l.hour < +(process.env.IG_POST_HOUR || 10)) return console.log(`[social] too early (posts from ${process.env.IG_POST_HOUR || 10}:00 UK time)`);
+  const hourFor = (f) => +(process.env[`IG_${f.toUpperCase()}_HOUR`] || process.env.IG_POST_HOUR || 10);
   if (!force && process.env.IG_WEEKDAYS_ONLY === "1" && [0, 6].includes(m.dayOfWeek ?? S.londonDate().weekday)) return console.log("[social] weekend: skipped");
-  const want = String(process.env.IG_FORMATS || "carousel,reel").split(",").map((x) => x.trim()), base = `${siteBase()}/social/${m.date}`, st = { at: (/* @__PURE__ */ new Date()).toISOString(), day: m.date };
-  const todo = want.filter((f) => force || meta(`ig_${f}_day`) !== m.date);
-  if (!todo.length) return console.log("[social] already posted today");
+  const want = String(process.env.IG_FORMATS || "carousel,reel").split(",").map((x) => x.trim()), base = `${siteBase()}/social/${m.date}`, st = { at: (/* @__PURE__ */ new Date()).toISOString(), day: m.date, ...(() => {
+    try {
+      const o = JSON.parse(meta("ig_status") || "{}");
+      return o.day === m.date ? o : {};
+    } catch {
+      return {};
+    }
+  })() };
+  st.at = (/* @__PURE__ */ new Date()).toISOString();
+  const todo = want.filter((f) => force || meta(`ig_${f}_day`) !== m.date && l.hour >= hourFor(f));
+  if (!todo.length) return console.log(`[social] nothing due now (${want.map((f) => `${f} from ${hourFor(f)}:00 UK${meta(`ig_${f}_day`) === m.date ? " - done" : ""}`).join(", ")})`);
   await live(`${base}/${m.carousel[0]}`);
   let failed = false;
   for (const f of todo) {
